@@ -1,11 +1,12 @@
 # src/backend/ai_services.py
+import os
 import openai
-from diffusers import StableDiffusionPipeline
+# from diffusers import StableDiffusionPipeline
 
 class DreamAIService:
     def __init__(self):
         openai.api_key = os.getenv('OPENAI_API_KEY')
-        self.image_generator = StableDiffusionPipeline.from_pretrained("stabilityai/stable-diffusion-2-1")
+        # self.image_generator = StableDiffusionPipeline.from_pretrained("stabilityai/stable-diffusion-2-1")
 
     def generate_interpretation(self, dream_description):
         response = openai.ChatCompletion.create(

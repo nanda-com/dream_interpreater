@@ -1,11 +1,17 @@
 # src/backend/main.py
+import uuid
 from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
-from database import SessionLocal, DreamEntry
-from ai_services import DreamAIService
+
+from src.backend.databases import SessionLocal, DreamEntry
+from src.backend.ai_services import DreamAIService
 
 app = FastAPI()
 ai_service = DreamAIService()
+
+@app.get("/hello")
+async def hello():
+    return "hello from dream journal"
 
 def get_db():
     db = SessionLocal()
@@ -38,3 +44,5 @@ def create_dream_entry(
         "interpretation": interpretation,
         "image_url": new_entry.image_url
     }
+
+
