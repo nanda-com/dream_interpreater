@@ -5,6 +5,7 @@ class HuggingFaceLLM:
         self.generator = pipeline(
             'text-generation', 
             model='gpt2'  # Free model
+            # model='meta-llama/Llama-2-7b-chat-hf'
         )
     
     def generate_interpretation(self, dream_description):
