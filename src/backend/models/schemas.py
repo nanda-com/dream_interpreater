@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from datetime import datetime
 from typing import List, Optional
 
@@ -13,9 +13,10 @@ class DreamCreateRequest(BaseModel):
     emotions: Optional[List[str]] = None
     tags: Optional[List[str]] = None
 
-    @validator('description')
+    @field_validator('description')
+    @classmethod
     def validate_description(cls, description):
-        if len(description.split()) < 5:
+        if len(description.split()) < 2:
             raise ValueError("Dream description is too short")
         return description
 
@@ -23,5 +24,6 @@ class DreamInterpretationResponse(BaseModel):
     id: Optional[str] = None
     description: str
     interpretation: str
+    title: Optional[str] = None
     date: datetime
     emotions: Optional[List[str]] = None
