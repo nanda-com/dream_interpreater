@@ -1,4 +1,7 @@
 # tests/test_dream_service.py
+from backend.ai_services import DreamAIService
+
+
 def test_dream_interpretation():
     ai_service = DreamAIService()
     dream_description = "I was flying over a city..."
