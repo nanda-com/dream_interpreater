@@ -2,7 +2,7 @@
 import uuid
 from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
-from src.backend.huggingface import HuggingFaceLLM
+from backend.ai_interpreters.huggingface import HuggingFaceLLM
 from src.backend.databases import SessionLocal, DreamEntry
 from src.backend.ai_services import DreamAIService
 

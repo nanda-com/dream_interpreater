@@ -4,6 +4,7 @@ import os
 from dotenv import load_dotenv
 import google.generativeai as genai
 from typing import Optional
+from src.backend.services.dream_rag_service import DreamRAGService
 
 # Load environment variables from .env file
 load_dotenv()
@@ -25,6 +26,7 @@ class GeminiDreamInterpreter:
         
         # Initialize the model
         self.model = genai.GenerativeModel('gemini-pro')
+        self.rag_service = DreamRAGService()
 
     def interpret_dream(self, description: str) -> str:
         try:
@@ -43,10 +45,15 @@ class GeminiDreamInterpreter:
             Interpretation:
             """
 
+            # Augment prompt with RAG context
+            augmented_prompt = self.rag_service.augment_prompt(description)
             # Generate interpretation
-            response = self.model.generate_content(prompt)
+            response = self.model.generate_content(augmented_prompt)
+            # response = augmented_prompt
+            print("hi from interpret dream")
             
             # Return the text response, handling potential errors
+            # return response
             return response.text.strip() or "Unable to generate interpretation"
 
         except Exception as e:
