@@ -19,7 +19,7 @@ class DreamRAGService:
         # Path for dream knowledge base
         self.knowledge_base_path = os.path.join(
             os.path.dirname(__file__), 
-            '..', 
+            '../../..', 
             'dream_knowledge_base'
         )
         

@@ -48,6 +48,7 @@ class GeminiDreamInterpreter:
             # Augment prompt with RAG context
             augmented_prompt = self.rag_service.augment_prompt(description)
             # Generate interpretation
+            print("augmented promnt : \n" + augmented_prompt)
             response = self.model.generate_content(augmented_prompt)
             # response = augmented_prompt
             print("hi from interpret dream")
