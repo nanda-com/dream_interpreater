@@ -1,13 +1,32 @@
-# src/backend/database.py
-from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy import Column, Integer, String, Text, DateTime
 from datetime import datetime
+import os
+from dotenv import load_dotenv
 
-# SQL Alchemy Setup
+# Load environment variables
+load_dotenv()
+
+# PostgreSQL Async Engine Configuration
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+engine = create_async_engine(
+    DATABASE_URL,
+    pool_size=20,
+    max_overflow=10,
+    pool_timeout=30,
+    pool_pre_ping=True
+)
+
+# Session factory
+AsyncSessionLocal = sessionmaker(
+    bind=engine,
+    class_=AsyncSession,
+    expire_on_commit=False
+)
+
 Base = declarative_base()
-engine = create_engine('sqlite:///dream_journal.db')
-SessionLocal = sessionmaker(bind=engine)
 
 class DreamEntry(Base):
     __tablename__ = 'dream_entries'
@@ -20,5 +39,7 @@ class DreamEntry(Base):
     image_url = Column(String)
     timestamp = Column(DateTime, default=datetime.utcnow)
 
-# Create tables
-Base.metadata.create_all(bind=engine)
+# Dependency to get DB session
+async def get_db():
+    async with AsyncSessionLocal() as session:
+        yield session
