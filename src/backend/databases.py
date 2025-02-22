@@ -1,4 +1,7 @@
+from http.client import HTTPException
+import asyncpg
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy import Column, Integer, String, Text, DateTime
 from datetime import datetime
@@ -9,7 +12,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # PostgreSQL Async Engine Configuration
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = os.getenv("PostgreSQL_URL")
+print (DATABASE_URL)
 
 engine = create_async_engine(
     DATABASE_URL,
@@ -28,18 +32,14 @@ AsyncSessionLocal = sessionmaker(
 
 Base = declarative_base()
 
-class DreamEntry(Base):
-    __tablename__ = 'dream_entries'
-    
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(String, nullable=False)
-    description = Column(Text, nullable=False)
-    interpretation = Column(Text)
-    emotion_tags = Column(String)
-    image_url = Column(String)
-    timestamp = Column(DateTime, default=datetime.utcnow)
-
 # Dependency to get DB session
 async def get_db():
-    async with AsyncSessionLocal() as session:
-        yield session
+    try:
+        async with AsyncSessionLocal() as session:
+            yield session
+    except asyncpg.InvalidPasswordError:
+        raise HTTPException(status_code=500, detail="Database authentication failed. Please check credentials.")
+    except asyncpg.CannotConnectNowError:
+        raise HTTPException(status_code=503, detail="Database server is down. Try again later.")
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")

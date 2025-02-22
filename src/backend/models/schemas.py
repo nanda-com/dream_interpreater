@@ -1,6 +1,10 @@
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, constr
 from datetime import datetime
 from typing import List, Optional
+
+class UserCreate(BaseModel):
+    username: str = Field(..., min_length=3, max_length=50, description="Username for the user")
+    password: str = Field(..., min_length=6, description="Password for the user")
 
 class DreamCreateRequest(BaseModel):
     description: str = Field(
@@ -19,6 +23,10 @@ class DreamCreateRequest(BaseModel):
         if len(description.split()) < 2:
             raise ValueError("Dream description is too short")
         return description
+
+class UserLogin(BaseModel):
+    username: str = Field(..., description="Username for login")
+    password: str = Field(..., description="Password for login")
 
 class DreamInterpretationResponse(BaseModel):
     id: Optional[str] = None

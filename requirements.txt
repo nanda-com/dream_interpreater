@@ -21,7 +21,6 @@ diffusers==0.15.0
 pillow==9.5.0
 
 # Database
-psycopg2-binary==2.9.6
 asyncpg==0.29.0
 sqlalchemy[asyncio]==2.0.5
 
@@ -34,6 +33,10 @@ pydantic==2.6.1
 python-dotenv==1.0.0
 pydantic-settings==2.1.0
 
+# Security and Extras
+bcrypt==4.0.1
+pyjwt==2.6.0
+
 # Other
 numpy==1.24.4
 
@@ -45,8 +48,9 @@ pytest==7.3.1
 httpx==0.26.0
 
 # Security and Extras
+bcrypt==4.0.1
+pyjwt==2.6.0
 email-validator==2.1.0
-
 
 # python -m venv venv # Create virtual environment
 # source venv/bin/activate # Activate virtual environment # On Windows: venv\Scripts\activate 
