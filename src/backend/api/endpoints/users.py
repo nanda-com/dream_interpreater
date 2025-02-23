@@ -15,9 +15,13 @@ async def register_user(user: UserCreate, db: AsyncSession = Depends(get_db)):
     if existing_user.scalars().first():
         raise HTTPException(status_code=400, detail="Username already registered")
 
+    existing_email = await db.execute(select(User).where(User.email == user.email))
+    if existing_email.scalars().first():
+        raise HTTPException(status_code=400, detail="Email already registered")
+
     # Hash the password and create the user
     hashed_password = hash_password(user.password)
-    new_user = User(username=user.username, hashed_password=hashed_password)
+    new_user = User(username=user.username, email=user.email, password=hashed_password)
     db.add(new_user)
     await db.commit()
     return {"message": "User registered successfully"}
@@ -25,9 +29,11 @@ async def register_user(user: UserCreate, db: AsyncSession = Depends(get_db)):
 @user_router.post("/login")
 async def login_user(user: UserLogin, db: AsyncSession = Depends(get_db)):
     # Verify user credentials
-    existing_user = await db.execute(select(User).where(User.username == user.username))
+    existing_user = await db.execute(select(User).where(
+        (User.username == user.username) | (User.email == user.email)
+    ))
     user_record = existing_user.scalars().first()
-    if not user_record or not verify_password(user.password, user_record.hashed_password):
+    if not user_record or not verify_password(user.password, user_record.password):
         raise HTTPException(status_code=400, detail="Invalid username or password")
 
     # Create JWT token
