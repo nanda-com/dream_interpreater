@@ -5,7 +5,7 @@ from typing import List, Optional
 class UserCreate(BaseModel):
     name: str = Field(..., min_length=3, max_length=20, description="Name for the user")
     email: str = Field(..., max_length=30, description="Email address for the user") 
-    password: str = Field(..., min_length=6,max_length=30, description="Password for the user")
+    password: str = Field(..., min_length=6,max_length=60, description="Password for the user")
 
 class DreamCreateRequest(BaseModel):
     description: str = Field(

@@ -29,13 +29,6 @@ async def login_user(user: UserLogin, db: AsyncSession = Depends(get_db)):
     # Verify user credentials
     existing_user = await db.execute(select(User).where(User.email == user.email))
     user_record = existing_user.scalars().first()
-    
-    # Debugging: Log the retrieved user record and password
-    if user_record:
-        print(f"Retrieved user: {user_record.email}, Hashed Password: {user_record.password}")
-    else:
-        print("User not found")
-
     if not user_record or not verify_password(user.password, user_record.password):
         raise HTTPException(status_code=400, detail="Invalid username or password")
 
