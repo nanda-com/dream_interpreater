@@ -1,5 +1,6 @@
 import uvicorn
 from fastapi import FastAPI
+from src.backend.databases import create_tables  # Import the create_tables function
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.backend.api.routes import router
@@ -34,6 +35,7 @@ app = create_application()
 # Startup event
 @app.on_event("startup")
 async def startup_event():
+    await create_tables()  # Call the create_tables function
     print(f"Starting {app.title} API")
 
 # Main entry point
