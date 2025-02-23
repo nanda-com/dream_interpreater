@@ -3,9 +3,9 @@ from datetime import datetime
 from typing import List, Optional
 
 class UserCreate(BaseModel):
-    username: str = Field(..., min_length=3, max_length=50, description="Username for the user")
-    email: str = Field(..., max_length=100, description="Email address for the user")  # New email field
-    password: str = Field(..., min_length=6, description="Password for the user")
+    name: str = Field(..., min_length=3, max_length=20, description="Name for the user")
+    email: str = Field(..., max_length=30, description="Email address for the user") 
+    password: str = Field(..., min_length=6,max_length=30, description="Password for the user")
 
 class DreamCreateRequest(BaseModel):
     description: str = Field(
@@ -26,7 +26,7 @@ class DreamCreateRequest(BaseModel):
         return description
 
 class UserLogin(BaseModel):
-    username: str = Field(..., description="Username for login")
+    email: str = Field(..., description="Email address for login")
     email: str = Field(..., description="Email address for login")  # Optional: Allow login via email
     password: str = Field(..., description="Password for login")
 

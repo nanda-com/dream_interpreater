@@ -1,5 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 from src.backend.databases import get_db
 from sqlalchemy.future import select
 from src.backend.models.schemas import UserCreate, UserLogin
@@ -11,10 +13,6 @@ user_router = APIRouter(prefix="/users", tags=["users"])
 @user_router.post("/register")
 async def register_user(user: UserCreate, db: AsyncSession = Depends(get_db)):
     # Check if the user already exists
-    existing_user = await db.execute(select(User).where(User.username == user.username))
-    if existing_user.scalars().first():
-        raise HTTPException(status_code=400, detail="Username already registered")
-
     existing_email = await db.execute(select(User).where(User.email == user.email))
     if existing_email.scalars().first():
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -29,9 +27,7 @@ async def register_user(user: UserCreate, db: AsyncSession = Depends(get_db)):
 @user_router.post("/login")
 async def login_user(user: UserLogin, db: AsyncSession = Depends(get_db)):
     # Verify user credentials
-    existing_user = await db.execute(select(User).where(
-        (User.username == user.username) | (User.email == user.email)
-    ))
+    existing_user = await db.execute(select(User).where(User.email == user.email))
     user_record = existing_user.scalars().first()
     if not user_record or not verify_password(user.password, user_record.password):
         raise HTTPException(status_code=400, detail="Invalid username or password")
@@ -39,3 +35,16 @@ async def login_user(user: UserLogin, db: AsyncSession = Depends(get_db)):
     # Create JWT token
     token = create_jwt_token(user_record.id)
     return {"access_token": token, "token_type": "bearer"}
+
+@user_router.get("/test_DB")
+async def test_database_connection(db: AsyncSession = Depends(get_db)):
+    try:
+        print("excecute query")
+        result = await db.execute(text("SELECT version()"))
+        print("excecuted query")
+        print(result)
+        version = result.scalar()
+        return {"database_version": version}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
