@@ -8,6 +8,7 @@ class UserCreate(BaseModel):
     password: str = Field(..., min_length=6,max_length=60, description="Password for the user")
 
 class DreamCreateRequest(BaseModel):
+    title: Optional[str] = Field(None, max_length=200)
     description: str = Field(
         ..., 
         min_length=10, 

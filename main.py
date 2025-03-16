@@ -1,10 +1,13 @@
 import uvicorn
 from fastapi import FastAPI
-from src.backend.databases import create_tables  # Import the create_tables function
+from fastapi.security import OAuth2PasswordBearer
+from src.backend.databases import create_tables
 from fastapi.middleware.cors import CORSMiddleware
-
 from src.backend.api.routes import router
 from src.backend.utils.config import get_settings
+from fastapi.openapi.utils import get_openapi
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 def create_application() -> FastAPI:
     settings = get_settings()
@@ -12,10 +15,11 @@ def create_application() -> FastAPI:
     app = FastAPI(
         title=settings.APP_NAME,
         description="AI-powered Dream Interpretation API",
-        version="1.0.0"
+        version="1.0.0",
+        swagger_ui_parameters={"persistAuthorization": True}
     )
 
-    # CORS Middleware
+    # Add CORS middleware
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
@@ -24,9 +28,46 @@ def create_application() -> FastAPI:
         allow_headers=["*"],
     )
 
-    # Include routers
-    app.include_router(router)
+    def custom_openapi():
+        if app.openapi_schema:
+            return app.openapi_schema
+            
+        openapi_schema = get_openapi(
+            title=app.title,
+            version=app.version,
+            description=app.description,
+            routes=app.routes,
+        )
+        
+        # Update security schemes
+        openapi_schema["components"] = {
+            "securitySchemes": {
+                "OAuth2PasswordBearer": {
+                    "type": "oauth2",
+                    "flows": {
+                        "password": {
+                            "tokenUrl": "token",
+                            "scopes": {}
+                        }
+                    }
+                }
+            }
+        }
+        
+        # Apply security globally
+        openapi_schema["security"] = [
+            {
+                "OAuth2PasswordBearer": []
+            }
+        ]
+        
+        app.openapi_schema = openapi_schema
+        return app.openapi_schema
 
+    app.openapi = custom_openapi
+    
+    # Include router after OpenAPI setup
+    app.include_router(router)
     return app
 
 # Create app instance

@@ -6,6 +6,7 @@ class DreamEntry(Base):
     __tablename__ = 'dream_entries'
     
     id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(200), nullable=True)  # Add title field
     description = Column(Text, nullable=False)
     interpretation = Column(Text)
     email = Column(String(100), nullable=False)
