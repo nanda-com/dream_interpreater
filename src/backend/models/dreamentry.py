@@ -9,7 +9,7 @@ class DreamEntry(Base):
     title = Column(String(200), nullable=True)  # Add title field
     description = Column(Text, nullable=False)
     interpretation = Column(Text)
-    email = Column(String(100), nullable=False)
+    email = Column(String(100), nullable=True)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
     emotion_tags = Column(String(100))
     image_url = Column(String(200))

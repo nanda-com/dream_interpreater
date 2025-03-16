@@ -1,6 +1,7 @@
 from typing import List, Optional
 from uuid import uuid4
 from datetime import datetime
+from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -21,6 +22,7 @@ class DreamService:
         title: Optional[str] = None,
         emotions: Optional[List[str]] = None
     ) -> DreamEntry:
+   
         # Get AI interpretation
         interpretation = self.ai_interpreter.interpret_dream(description)
         
@@ -37,11 +39,18 @@ class DreamService:
             emotion_tags=",".join(emotions) if emotions else None,
             timestamp=datetime.utcnow()
         )
+
         
-        db.add(dream_entry)
-        await db.commit()
-        await db.refresh(dream_entry)
+        try:
+            db.add(dream_entry)
+            await db.commit()
+            await db.refresh(dream_entry)
+            
+        except Exception as e:
+            print("debug: error adding dream to db: ", e)
+            raise HTTPException(status_code=500, detail=str(e))
         
+        # print(dream_entry.interpretation)
         return dream_entry
 
     async def list_user_dreams(

@@ -38,7 +38,7 @@ async def create_dream_entry(
     # Verify token and get user_id
     payload = verify_token(token)
     user_id = int(payload.get("sub"))
-    
+    print(user_id)
     try:
         dream_entry = await dream_service.create_dream(
             db=db,
@@ -47,6 +47,7 @@ async def create_dream_entry(
             title=dream_data.title,
             emotions=dream_data.emotions
         )
+        print(dream_entry)
         return dream_entry
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

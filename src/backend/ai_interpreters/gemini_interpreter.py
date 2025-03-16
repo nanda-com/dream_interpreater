@@ -25,7 +25,7 @@ class GeminiDreamInterpreter:
         genai.configure(api_key=self.api_key)
         
         # Initialize the model
-        self.model = genai.GenerativeModel('gemini-pro')
+        self.model = genai.GenerativeModel('gemini-2.0-flash')
         self.rag_service = DreamRAGService()
 
     def interpret_dream(self, description: str) -> str:

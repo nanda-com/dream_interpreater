@@ -36,9 +36,9 @@ class Token(BaseModel):
     token_type: str
 
 class DreamInterpretationResponse(BaseModel):
-    id: Optional[str] = None
+    id: Optional[int] = None
     description: str
     interpretation: str
     title: Optional[str] = None
-    date: datetime
+    timestamp: datetime
     emotions: Optional[List[str]] = None
