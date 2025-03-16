@@ -29,6 +29,7 @@ class DreamService:
         # Generate title if not provided
         if not title:
             title = self.ai_interpreter.generate_dream_title(description)
+            title = title[:35]  
 
         # Create dream entry
         dream_entry = DreamEntry(

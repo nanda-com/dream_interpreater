@@ -68,13 +68,14 @@ class GeminiDreamInterpreter:
         """
         try:
             prompt = f"""
-            Create a unique, poetic, and intriguing title for this dream description:
+            Create a simple unique, and intriguing title for this dream description:
             {description}
 
             Title should be:
-            - Concise (5-7 words)
+            - Concise (2 - 3 words)
             - Metaphorical
             - Capture the dream's essence
+            Return only the single title. Dont add any extra text in your response.
             """
 
             response = self.model.generate_content(prompt)
