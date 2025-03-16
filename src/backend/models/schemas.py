@@ -6,6 +6,7 @@ class UserCreate(BaseModel):
     name: str = Field(..., min_length=3, max_length=20, description="Name for the user")
     email: str = Field(..., max_length=30, description="Email address for the user") 
     password: str = Field(..., min_length=6,max_length=60, description="Password for the user")
+    isGuest: bool = Field(default=False, description="Flag indicating if the user is a guest")
 
 class DreamCreateRequest(BaseModel):
     title: Optional[str] = Field(None, max_length=200)
@@ -34,6 +35,12 @@ class Token(BaseModel):
     access_token: str
     refresh_token: Optional[str] = None
     token_type: str
+
+class UserResponse(BaseModel):
+    id: int
+    name: str
+    email: str
+    isGuest: bool
 
 class DreamInterpretationResponse(BaseModel):
     id: Optional[int] = None

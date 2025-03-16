@@ -5,9 +5,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 from src.backend.databases import get_db
 from sqlalchemy.future import select
-from src.backend.models.schemas import UserCreate, UserLogin, Token
+from src.backend.models.schemas import UserCreate, UserLogin, Token, UserResponse
 from src.backend.utils.auth import hash_password, create_jwt_token, verify_password, verify_token
 from src.backend.models import User
+import uuid
+import random
+import string
 
 user_router = APIRouter(prefix="/users", tags=["users"])
 
@@ -20,12 +23,12 @@ async def register_user(user: UserCreate, db: AsyncSession = Depends(get_db)):
 
     # Hash the password and create the user
     hashed_password = hash_password(user.password)
-    new_user = User(name=user.name, email=user.email, password=hashed_password)
+    new_user = User(name=user.name, email=user.email, password=hashed_password, isGuest=user.isGuest)
     db.add(new_user)
     await db.commit()
     return {"message": "User registered successfully"}
 
-@user_router.post("/login", response_model=Token)
+@user_router.post("/login")
 async def login_user(user: UserLogin, db: AsyncSession = Depends(get_db)):
     # Verify user credentials
     existing_user = await db.execute(select(User).where(User.email == user.email))
@@ -40,11 +43,17 @@ async def login_user(user: UserLogin, db: AsyncSession = Depends(get_db)):
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
-        "token_type": "bearer"
+        "token_type": "bearer",
+        "user": {
+            "id": user_record.id,
+            "name": user_record.name,
+            "email": user_record.email,
+            "isGuest": user_record.isGuest
+        }
     }
 
 # Add a new endpoint that works with OAuth2 password flow for Swagger UI
-@user_router.post("/token", response_model=Token)
+@user_router.post("/token")
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
     # Verify user credentials
     existing_user = await db.execute(select(User).where(User.email == form_data.username))
@@ -62,7 +71,13 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     return {
         "access_token": access_token,
         "refresh_token": "",  # OAuth2 form doesn't need refresh token
-        "token_type": "bearer"
+        "token_type": "bearer",
+        "user": {
+            "id": user_record.id,
+            "name": user_record.name,
+            "email": user_record.email,
+            "isGuest": user_record.isGuest
+        }
     }
 
 @user_router.post("/refresh")
@@ -94,3 +109,94 @@ async def test_database_connection(db: AsyncSession = Depends(get_db)):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@user_router.post("/guest")
+async def create_guest_user(db: AsyncSession = Depends(get_db)):
+    # Generate a random name, email, and password for the guest user
+    random_suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=8))
+    guest_name = f"Guest_{random_suffix}"
+    guest_email = f"guest_{random_suffix}@example.com"
+    guest_password = str(uuid.uuid4())
+    
+    # Hash the password and create the guest user
+    hashed_password = hash_password(guest_password)
+    guest_user = User(name=guest_name, email=guest_email, password=hashed_password, isGuest=True)
+    db.add(guest_user)
+    await db.commit()
+    
+    # Create access and refresh tokens
+    access_token = create_jwt_token(guest_user.id)
+    refresh_token = create_jwt_token(guest_user.id, is_refresh_token=True)
+    
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer",
+        "user": {
+            "id": guest_user.id,
+            "name": guest_user.name,
+            "email": guest_user.email,
+            "isGuest": guest_user.isGuest
+        }
+    }
+
+# Add a function to get the current user
+async def get_current_user(token: str = Depends(OAuth2PasswordBearer(tokenUrl="/users/token")), db: AsyncSession = Depends(get_db)):
+    try:
+        payload = verify_token(token)
+        user_id = int(payload.get("sub"))
+        user_query = await db.execute(select(User).where(User.id == user_id))
+        user = user_query.scalars().first()
+        if user is None:
+            raise HTTPException(status_code=401, detail="Invalid authentication credentials")
+        return user
+    except Exception as e:
+        raise HTTPException(status_code=401, detail="Invalid authentication credentials")
+
+@user_router.get("/me", response_model=UserResponse)
+async def get_user_me(current_user: User = Depends(get_current_user)):
+    return {
+        "id": current_user.id,
+        "name": current_user.name,
+        "email": current_user.email,
+        "isGuest": current_user.isGuest
+    }
+
+@user_router.post("/convert-guest")
+async def convert_guest_to_regular(
+    user_data: UserCreate, 
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    # Check if the current user is a guest
+    if not current_user.isGuest:
+        raise HTTPException(status_code=400, detail="Only guest users can be converted")
+    
+    # Check if the email is already registered
+    existing_email = await db.execute(select(User).where(User.email == user_data.email))
+    if existing_email.scalars().first():
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    # Update the user information
+    current_user.name = user_data.name
+    current_user.email = user_data.email
+    current_user.password = hash_password(user_data.password)
+    current_user.isGuest = False
+    
+    await db.commit()
+    
+    # Create new tokens
+    access_token = create_jwt_token(current_user.id)
+    refresh_token = create_jwt_token(current_user.id, is_refresh_token=True)
+    
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer",
+        "user": {
+            "id": current_user.id,
+            "name": current_user.name,
+            "email": current_user.email,
+            "isGuest": current_user.isGuest
+        }
+    }
