@@ -39,20 +39,24 @@ def create_application() -> FastAPI:
             routes=app.routes,
         )
         
+        # Preserve existing components if they exist
+        components = openapi_schema.get("components", {})
+        
         # Update security schemes
-        openapi_schema["components"] = {
-            "securitySchemes": {
-                "OAuth2PasswordBearer": {
-                    "type": "oauth2",
-                    "flows": {
-                        "password": {
-                            "tokenUrl": "token",
-                            "scopes": {}
-                        }
+        components["securitySchemes"] = {
+            "OAuth2PasswordBearer": {
+                "type": "oauth2",
+                "flows": {
+                    "password": {
+                        "tokenUrl": "token",
+                        "scopes": {}
                     }
                 }
             }
         }
+        
+        # Update the components in the schema
+        openapi_schema["components"] = components
         
         # Apply security globally
         openapi_schema["security"] = [

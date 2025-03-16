@@ -1,4 +1,4 @@
-from http.client import HTTPException
+from fastapi import HTTPException
 import bcrypt
 import jwt
 import os
@@ -42,6 +42,12 @@ def verify_token(token: str) -> dict:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         return payload
     except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token has expired")
-    except jwt.JWTError:
-        raise HTTPException(status_code=401, detail="Invalid token")
+        raise HTTPException(
+            status_code=401,
+            detail="Token has expired"
+        )
+    except (jwt.exceptions.PyJWTError, ValueError):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid token"
+        )

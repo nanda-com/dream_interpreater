@@ -52,9 +52,14 @@ bcrypt==4.0.1
 pyjwt==2.6.0
 email-validator==2.1.0
 
+# python-multipart
+
 # python -m venv venv # Create virtual environment
 # source venv/bin/activate # Activate virtual environment # On Windows: venv\Scripts\activate 
 
 #pip install -r requirements.txt #pip install --upgrade --force-reinstall -r requirements.txt
 
 #uvicorn main:app --reload
+
+
+

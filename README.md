@@ -26,3 +26,16 @@ An AI-powered dream interpretation API using Google Gemini and FastAPI.
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
+
+##Test API
+curl -X POST "http://127.0.0.1:8000/dreams/" \
+ -H "accept: application/json" \
+ -H "Authorization: Bearer TOKEN" \
+ -H "Content-Type: application/json" \
+ -d '{
+"title": "string",
+"description": "I saw an apple flying while I was walking in the park.",
+"date": "2025-03-16T08:57:23.323Z",
+"emotions": ["string"],
+"tags": ["string"]
+}'

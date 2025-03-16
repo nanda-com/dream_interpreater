@@ -1,11 +1,11 @@
-from fastapi import APIRouter, HTTPException, Depends
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 from src.backend.databases import get_db
 from sqlalchemy.future import select
-from src.backend.models.schemas import UserCreate, UserLogin
+from src.backend.models.schemas import UserCreate, UserLogin, Token
 from src.backend.utils.auth import hash_password, create_jwt_token, verify_password, verify_token
 from src.backend.models import User
 
@@ -25,7 +25,7 @@ async def register_user(user: UserCreate, db: AsyncSession = Depends(get_db)):
     await db.commit()
     return {"message": "User registered successfully"}
 
-@user_router.post("/login")
+@user_router.post("/login", response_model=Token)
 async def login_user(user: UserLogin, db: AsyncSession = Depends(get_db)):
     # Verify user credentials
     existing_user = await db.execute(select(User).where(User.email == user.email))
@@ -40,6 +40,28 @@ async def login_user(user: UserLogin, db: AsyncSession = Depends(get_db)):
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
+        "token_type": "bearer"
+    }
+
+# Add a new endpoint that works with OAuth2 password flow for Swagger UI
+@user_router.post("/token", response_model=Token)
+async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
+    # Verify user credentials
+    existing_user = await db.execute(select(User).where(User.email == form_data.username))
+    user_record = existing_user.scalars().first()
+    if not user_record or not verify_password(form_data.password, user_record.password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # Create access token
+    access_token = create_jwt_token(user_record.id)
+    
+    return {
+        "access_token": access_token,
+        "refresh_token": "",  # OAuth2 form doesn't need refresh token
         "token_type": "bearer"
     }
 

@@ -28,8 +28,12 @@ class DreamCreateRequest(BaseModel):
 
 class UserLogin(BaseModel):
     email: str = Field(..., description="Email address for login")
-    email: str = Field(..., description="Email address for login")  # Optional: Allow login via email
     password: str = Field(..., description="Password for login")
+
+class Token(BaseModel):
+    access_token: str
+    refresh_token: Optional[str] = None
+    token_type: str
 
 class DreamInterpretationResponse(BaseModel):
     id: Optional[str] = None
