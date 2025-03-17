@@ -115,7 +115,7 @@ async def create_guest_user(db: AsyncSession = Depends(get_db)):
     # Generate a random name, email, and password for the guest user
     random_suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=8))
     guest_name = f"Guest_{random_suffix}"
-    guest_email = f"guest_{random_suffix}@example.com"
+    guest_email = f"guest_{random_suffix}@guest.com"
     guest_password = str(uuid.uuid4())
     
     # Hash the password and create the guest user

@@ -30,7 +30,7 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 ##Test API
 curl -X POST "http://127.0.0.1:8000/dreams/" \
  -H "accept: application/json" \
- -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDIyMTAwMzIsInN1YiI6IjQiLCJ0eXBlIjoiYWNjZXNzIn0.54zfbvNCIFeWDQJJw0noid7Ale7LHoe8zuRrQhJUc20" \
+ -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDIzMDM0MjQsInN1YiI6IjQiLCJ0eXBlIjoiYWNjZXNzIn0.loz-WryhvQq-oOBKUVNwiWoCwtxZK3yCnIpWnLmYoUE" \
  -H "Content-Type: application/json" \
  -d '{
 "title": "string",
@@ -39,3 +39,10 @@ curl -X POST "http://127.0.0.1:8000/dreams/" \
 "emotions": ["string"],
 "tags": ["string"]
 }'
+
+##
+
+curl -X 'GET' \
+ 'http://127.0.0.1:8000/dreams/' \
+ -H 'accept: application/json' \
+ -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDIzMDM0MjQsInN1YiI6IjQiLCJ0eXBlIjoiYWNjZXNzIn0.loz-WryhvQq-oOBKUVNwiWoCwtxZK3yCnIpWnLmYoUE"
