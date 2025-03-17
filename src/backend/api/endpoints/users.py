@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 from src.backend.databases import get_db
 from sqlalchemy.future import select
-from src.backend.models.schemas import UserCreate, UserLogin, Token, UserResponse
+from src.backend.models.schemas import UserCreate, UserLogin, Token, UserResponse, GuestToRegularConversion
 from src.backend.utils.auth import hash_password, create_jwt_token, verify_password, verify_token
 from src.backend.models import User
 import uuid
@@ -164,7 +164,7 @@ async def get_user_me(current_user: User = Depends(get_current_user)):
 
 @user_router.post("/convert-guest")
 async def convert_guest_to_regular(
-    user_data: UserCreate, 
+    user_data: GuestToRegularConversion, 
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
@@ -172,8 +172,13 @@ async def convert_guest_to_regular(
     if not current_user.isGuest:
         raise HTTPException(status_code=400, detail="Only guest users can be converted")
     
-    # Check if the email is already registered
-    existing_email = await db.execute(select(User).where(User.email == user_data.email))
+    # Check if the email is already registered by another user
+    existing_email = await db.execute(
+        select(User).where(
+            (User.email == user_data.email) & 
+            (User.id != current_user.id)
+        )
+    )
     if existing_email.scalars().first():
         raise HTTPException(status_code=400, detail="Email already registered")
     

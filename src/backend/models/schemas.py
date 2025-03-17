@@ -49,3 +49,8 @@ class DreamInterpretationResponse(BaseModel):
     title: Optional[str] = None
     timestamp: datetime
     emotions: Optional[List[str]] = None
+
+class GuestToRegularConversion(BaseModel):
+    name: str = Field(..., min_length=3, max_length=20, description="New name for the user")
+    email: str = Field(..., max_length=30, description="New email address for the user") 
+    password: str = Field(..., min_length=6, max_length=60, description="New password for the user")
