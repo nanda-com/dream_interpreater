@@ -27,6 +27,26 @@ class DreamCreateRequest(BaseModel):
             raise ValueError("Dream description is too short")
         return description
 
+class FeedbackCreateRequest(BaseModel):
+    content: str = Field(
+        ..., 
+        min_length=1, 
+        max_length=1000, 
+        description="Feedback content from the user"
+    )
+    rating: Optional[int] = Field(
+        None, 
+        ge=1, 
+        le=5, 
+        description="Optional rating from 1-5"
+    )
+
+class FeedbackResponse(BaseModel):
+    id: int
+    content: str
+    rating: Optional[int] = None
+    timestamp: datetime
+
 class UserLogin(BaseModel):
     email: str = Field(..., description="Email address for login")
     password: str = Field(..., description="Password for login")
