@@ -74,3 +74,14 @@ class GuestToRegularConversion(BaseModel):
     name: str = Field(..., min_length=3, max_length=20, description="New name for the user")
     email: str = Field(..., max_length=30, description="New email address for the user") 
     password: str = Field(..., min_length=6, max_length=60, description="New password for the user")
+
+class GoogleAuthRequest(BaseModel):
+    """Schema for Google authentication token data"""
+    token: str = Field(..., description="Google authentication ID token")
+
+class GoogleUserInfo(BaseModel):
+    """Schema for Google user information"""
+    id: str
+    email: str
+    name: str
+    picture: Optional[str] = None

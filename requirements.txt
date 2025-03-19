@@ -51,6 +51,7 @@ httpx==0.26.0
 bcrypt==4.0.1
 pyjwt==2.6.0
 email-validator==2.1.0
+google-auth requests
 
 # python-multipart
 

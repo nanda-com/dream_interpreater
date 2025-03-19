@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = ""
     DATABASE_URL: str = "sqlite:///./dream_journal.db"
     JWT_SECRET: str = "your_jwt_secret"
+    
+    # Google OAuth2 credentials
+    GOOGLE_CLIENT_ID: str = ""
 
     # Use model_config instead of Config in Pydantic v2
     model_config = SettingsConfigDict(

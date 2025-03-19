@@ -5,8 +5,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 from src.backend.databases import get_db
 from sqlalchemy.future import select
-from src.backend.models.schemas import UserCreate, UserLogin, Token, UserResponse, GuestToRegularConversion
+from src.backend.models.schemas import UserCreate, UserLogin, Token, UserResponse, GuestToRegularConversion, GoogleAuthRequest, GoogleUserInfo
 from src.backend.utils.auth import hash_password, create_jwt_token, verify_password, verify_token
+from src.backend.utils.oauth.google import verify_google_token
 from src.backend.models import User
 import uuid
 import random
@@ -205,3 +206,73 @@ async def convert_guest_to_regular(
             "isGuest": current_user.isGuest
         }
     }
+
+@user_router.post("/auth/google")
+async def login_with_google(google_data: GoogleAuthRequest, db: AsyncSession = Depends(get_db)):
+    """
+    Handle Google OAuth login
+    """
+    try:
+        # Verify the Google ID token
+        user_info = await verify_google_token(google_data.token)
+        
+        # Check if user with this Google ID exists
+        user_by_google_id = await db.execute(select(User).where(User.google_id == user_info["id"]))
+        user_record = user_by_google_id.scalars().first()
+        
+        # If not found by Google ID, try to find by email
+        if not user_record:
+            user_by_email = await db.execute(select(User).where(User.email == user_info["email"]))
+            user_record = user_by_email.scalars().first()
+            
+            # If user exists with this email but no Google ID, update the user with Google ID
+            if user_record:
+                user_record.google_id = user_info["id"]
+                await db.commit()
+        
+        # If user doesn't exist, create a new one
+        if not user_record:
+            # Generate a random password (user won't use it)
+            random_password = str(uuid.uuid4())
+            hashed_password = hash_password(random_password)
+            
+            # Create user
+            new_user = User(
+                name=user_info["name"], 
+                email=user_info["email"],
+                password=hashed_password,
+                google_id=user_info["id"],
+                isGuest=False
+            )
+            db.add(new_user)
+            await db.commit()
+            
+            # Refresh to get the ID
+            await db.refresh(new_user)
+            user_record = new_user
+        
+        # Create tokens
+        access_token = create_jwt_token(user_record.id)
+        refresh_token = create_jwt_token(user_record.id, is_refresh_token=True)
+        
+        return {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "token_type": "bearer",
+            "user": {
+                "id": user_record.id,
+                "name": user_record.name,
+                "email": user_record.email,
+                "isGuest": user_record.isGuest
+            }
+        }
+        
+    except ValueError as e:
+        if "GOOGLE_CLIENT_ID is not set" in str(e):
+            raise HTTPException(
+                status_code=500,
+                detail="Server configuration error: Google Client ID is not configured. Please add GOOGLE_CLIENT_ID to your .env file."
+            )
+        raise HTTPException(status_code=401, detail=f"Invalid Google authentication: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=f"Invalid Google authentication: {str(e)}")
