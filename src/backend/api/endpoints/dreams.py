@@ -38,14 +38,15 @@ async def create_dream_entry(
     # Verify token and get user_id
     payload = verify_token(token)
     user_id = int(payload.get("sub"))
-    print(user_id)
+    
     try:
         dream_entry = await dream_service.create_dream(
             db=db,
             user_id=user_id,
             description=dream_data.description,
             title=dream_data.title,
-            emotions=dream_data.emotions
+            emotions=dream_data.emotions,
+            timestamp=dream_data.timestamp  # Use client-provided timestamp
         )
         print(dream_entry)
         return dream_entry
@@ -128,7 +129,8 @@ async def update_dream(
         user_id=user_id,
         title=dream_data.title,
         description=dream_data.description,
-        emotions=dream_data.emotions
+        emotions=dream_data.emotions,
+        timestamp=dream_data.timestamp  # Pass client-provided timestamp
     )
     
     if not updated_dream:

@@ -16,7 +16,7 @@ class DreamCreateRequest(BaseModel):
         max_length=2000, 
         description="Detailed dream description"
     )
-    date: Optional[datetime] = Field(default_factory=datetime.now)
+    timestamp: Optional[datetime] = Field(default_factory=datetime.now)
     emotions: Optional[List[str]] = None
     tags: Optional[List[str]] = None
 
@@ -35,6 +35,7 @@ class DreamUpdateRequest(BaseModel):
         max_length=2000, 
         description="Updated dream description"
     )
+    timestamp: Optional[datetime] = None
     emotions: Optional[List[str]] = None
 
     @field_validator('description')

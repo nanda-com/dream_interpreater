@@ -20,7 +20,8 @@ class DreamService:
         user_id: int,
         description: str,
         title: Optional[str] = None,
-        emotions: Optional[List[str]] = None
+        emotions: Optional[List[str]] = None,
+        timestamp: Optional[datetime] = None
     ) -> DreamEntry:
    
         # Get AI interpretation
@@ -38,7 +39,7 @@ class DreamService:
             description=description,
             interpretation=interpretation,
             emotion_tags=",".join(emotions) if emotions else None,
-            timestamp=datetime.utcnow()
+            timestamp=timestamp or datetime.utcnow()
         )
 
         
@@ -97,7 +98,8 @@ class DreamService:
         user_id: int,
         title: Optional[str] = None,
         description: Optional[str] = None,
-        emotions: Optional[List[str]] = None
+        emotions: Optional[List[str]] = None,
+        timestamp: Optional[datetime] = None
     ) -> Optional[DreamEntry]:
         """
         Update a dream entry. If description is changed, re-interpret the dream.
@@ -125,6 +127,10 @@ class DreamService:
         # Update emotions if provided
         if emotions is not None:
             dream.emotion_tags = ",".join(emotions) if emotions else None
+            
+        # Update timestamp if provided
+        if timestamp is not None:
+            dream.timestamp = timestamp
             
         await db.commit()
         await db.refresh(dream)
