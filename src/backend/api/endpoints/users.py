@@ -210,11 +210,11 @@ async def convert_guest_to_regular(
 @user_router.post("/auth/google")
 async def login_with_google(google_data: GoogleAuthRequest, db: AsyncSession = Depends(get_db)):
     """
-    Handle Google OAuth login
+    Handle Google OAuth login with support for both ID tokens and access tokens
     """
     try:
-        # Verify the Google ID token
-        user_info = await verify_google_token(google_data.token)
+        # Verify the Google token using the specified token type
+        user_info = await verify_google_token(google_data.token, google_data.token_type)
         
         # Check if user with this Google ID exists
         user_by_google_id = await db.execute(select(User).where(User.google_id == user_info["id"]))

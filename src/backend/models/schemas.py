@@ -77,7 +77,8 @@ class GuestToRegularConversion(BaseModel):
 
 class GoogleAuthRequest(BaseModel):
     """Schema for Google authentication token data"""
-    token: str = Field(..., description="Google authentication ID token")
+    token: str = Field(..., description="Google authentication token")
+    token_type: str = Field(default="id_token", description="Type of token provided. Can be 'id_token' or 'access_token'")
 
 class GoogleUserInfo(BaseModel):
     """Schema for Google user information"""
