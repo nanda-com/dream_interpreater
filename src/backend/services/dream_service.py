@@ -65,3 +65,67 @@ class DreamService:
             .order_by(DreamEntry.timestamp.desc())
         )
         return result.scalars().all()
+
+    async def delete_dream(
+        self,
+        db: AsyncSession,
+        dream_id: int,
+        user_id: int
+    ) -> bool:
+        """
+        Delete a dream entry by ID. Ensures the dream belongs to the user.
+        Returns True if deletion was successful, False if dream was not found.
+        """
+        result = await db.execute(
+            select(DreamEntry)
+            .where(DreamEntry.id == dream_id)
+            .where(DreamEntry.user_id == user_id)
+        )
+        dream = result.scalars().first()
+        
+        if not dream:
+            return False
+            
+        await db.delete(dream)
+        await db.commit()
+        return True
+        
+    async def update_dream(
+        self,
+        db: AsyncSession,
+        dream_id: int,
+        user_id: int,
+        title: Optional[str] = None,
+        description: Optional[str] = None,
+        emotions: Optional[List[str]] = None
+    ) -> Optional[DreamEntry]:
+        """
+        Update a dream entry. If description is changed, re-interpret the dream.
+        Returns updated dream entry if found, None otherwise.
+        """
+        result = await db.execute(
+            select(DreamEntry)
+            .where(DreamEntry.id == dream_id)
+            .where(DreamEntry.user_id == user_id)
+        )
+        dream = result.scalars().first()
+        
+        if not dream:
+            return None
+            
+        # Update fields if provided
+        if title is not None:
+            dream.title = title
+            
+        # If description changed, re-interpret the dream
+        if description is not None and description != dream.description:
+            dream.description = description
+            dream.interpretation = self.ai_interpreter.interpret_dream(description)
+            
+        # Update emotions if provided
+        if emotions is not None:
+            dream.emotion_tags = ",".join(emotions) if emotions else None
+            
+        await db.commit()
+        await db.refresh(dream)
+        return dream

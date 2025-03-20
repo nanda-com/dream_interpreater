@@ -27,6 +27,23 @@ class DreamCreateRequest(BaseModel):
             raise ValueError("Dream description is too short")
         return description
 
+class DreamUpdateRequest(BaseModel):
+    title: Optional[str] = Field(None, max_length=200)
+    description: Optional[str] = Field(
+        None, 
+        min_length=10, 
+        max_length=2000, 
+        description="Updated dream description"
+    )
+    emotions: Optional[List[str]] = None
+
+    @field_validator('description')
+    @classmethod
+    def validate_description(cls, description):
+        if description is not None and len(description.split()) < 2:
+            raise ValueError("Dream description is too short")
+        return description
+
 class FeedbackCreateRequest(BaseModel):
     content: str = Field(
         ..., 

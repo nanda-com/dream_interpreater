@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.backend.databases import get_db
 from src.backend.services.dream_service import DreamService
-from src.backend.models.schemas import DreamCreateRequest, DreamInterpretationResponse
+from src.backend.models.schemas import DreamCreateRequest, DreamInterpretationResponse, DreamUpdateRequest
 from src.backend.utils.auth import verify_token
 from src.backend.ai_interpreters.gemini_interpreter import GeminiDreamInterpreter
 from typing import List
@@ -69,3 +69,69 @@ async def list_dreams(
     
     dreams = await dream_service.list_user_dreams(db, user_id)
     return dreams
+
+@dream_router.delete(
+    "/{dream_id}",
+    responses={
+        200: {"description": "Dream deleted successfully"},
+        404: {"description": "Dream not found"},
+        401: {"description": "Unauthorized"}
+    }
+)
+async def delete_dream(
+    dream_id: int,
+    db: AsyncSession = Depends(get_db),
+    token: str = Depends(oauth2_scheme)
+):
+    """
+    Delete a dream entry by ID
+    """
+    payload = verify_token(token)
+    user_id = int(payload.get("sub"))
+    
+    success = await dream_service.delete_dream(
+        db=db, 
+        dream_id=dream_id, 
+        user_id=user_id
+    )
+    
+    if not success:
+        raise HTTPException(status_code=404, detail="Dream entry not found")
+    
+    return {"message": "Dream deleted successfully"}
+
+@dream_router.put(
+    "/{dream_id}",
+    response_model=DreamInterpretationResponse,
+    responses={
+        200: {"description": "Dream updated successfully"},
+        404: {"description": "Dream not found"},
+        401: {"description": "Unauthorized"},
+        422: {"description": "Validation Error"}
+    }
+)
+async def update_dream(
+    dream_id: int,
+    dream_data: DreamUpdateRequest,
+    db: AsyncSession = Depends(get_db),
+    token: str = Depends(oauth2_scheme)
+) -> DreamInterpretationResponse:
+    """
+    Update a dream entry by ID
+    """
+    payload = verify_token(token)
+    user_id = int(payload.get("sub"))
+    
+    updated_dream = await dream_service.update_dream(
+        db=db,
+        dream_id=dream_id,
+        user_id=user_id,
+        title=dream_data.title,
+        description=dream_data.description,
+        emotions=dream_data.emotions
+    )
+    
+    if not updated_dream:
+        raise HTTPException(status_code=404, detail="Dream entry not found")
+    
+    return updated_dream
