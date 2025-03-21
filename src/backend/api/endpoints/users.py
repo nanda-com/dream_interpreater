@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from sqlalchemy import text
+from sqlalchemy import text, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 from src.backend.databases import get_db
@@ -8,7 +8,7 @@ from sqlalchemy.future import select
 from src.backend.models.schemas import UserCreate, UserLogin, Token, UserResponse, GuestToRegularConversion, GoogleAuthRequest, GoogleUserInfo
 from src.backend.utils.auth import hash_password, create_jwt_token, verify_password, verify_token
 from src.backend.utils.oauth.google import verify_google_token
-from src.backend.models import User
+from src.backend.models import User, DreamEntry, Feedback
 import uuid
 import random
 import string
@@ -276,3 +276,71 @@ async def login_with_google(google_data: GoogleAuthRequest, db: AsyncSession = D
         raise HTTPException(status_code=401, detail=f"Invalid Google authentication: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Invalid Google authentication: {str(e)}")
+
+@user_router.delete("/me", response_model=dict)
+async def delete_user_account(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    """
+    Delete the current user and all their associated data (dreams and feedback).
+    This is particularly useful for cleaning up guest accounts on logout.
+    
+    Note: In the future, consider adding CASCADE DELETE constraints in the database
+    to automate this deletion process when a user is deleted.
+    """
+    user_id = current_user.id
+    
+    try:
+        # Delete all the user's dream entries using bulk delete
+        await db.execute(
+            delete(DreamEntry).where(DreamEntry.user_id == user_id)
+        )
+        
+        # Delete all the user's feedback using bulk delete
+        await db.execute(
+            delete(Feedback).where(Feedback.user_id == user_id)
+        )
+        
+        # Finally, delete the user
+        await db.delete(current_user)
+        await db.commit()
+        
+        return {"message": "User account and all associated data deleted successfully"}
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error deleting user account: {str(e)}")
+
+@user_router.delete("/guest/logout", response_model=dict)
+async def delete_guest_on_logout(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    """
+    Delete a guest user account and all associated data on logout.
+    This endpoint will only work for users with isGuest=True.
+    
+    Note: In the future, consider adding CASCADE DELETE constraints in the database
+    to automate this deletion process when a user is deleted.
+    """
+    if not current_user.isGuest:
+        raise HTTPException(
+            status_code=403, 
+            detail="This endpoint is only available for guest users"
+        )
+    
+    user_id = current_user.id
+    
+    try:
+        # Delete all the user's dream entries using bulk delete
+        await db.execute(
+            delete(DreamEntry).where(DreamEntry.user_id == user_id)
+        )
+        
+        # Delete all the user's feedback using bulk delete
+        await db.execute(
+            delete(Feedback).where(Feedback.user_id == user_id)
+        )
+        
+        # Finally, delete the user
+        await db.delete(current_user)
+        await db.commit()
+        
+        return {"message": "Guest user account and all associated data deleted successfully"}
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error deleting guest user account: {str(e)}")
