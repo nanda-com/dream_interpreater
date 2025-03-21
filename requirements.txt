@@ -51,9 +51,8 @@ httpx==0.26.0
 bcrypt==4.0.1
 pyjwt==2.6.0
 email-validator==2.1.0
-google-auth requests
-
-# python-multipart
+google-auth
+python-multipart
 
 # python -m venv venv # Create virtual environment
 # source venv/bin/activate # Activate virtual environment # On Windows: venv\Scripts\activate 
