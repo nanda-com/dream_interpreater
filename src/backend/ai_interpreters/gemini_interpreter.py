@@ -28,39 +28,94 @@ class GeminiDreamInterpreter:
         self.model = genai.GenerativeModel('gemini-2.0-flash')
         self.rag_service = DreamRAGService()
 
-    def interpret_dream(self, description: str) -> str:
+    def interpret_dream(self, description: str, title: Optional[str] = None) -> tuple[str, str]:
         try:
-            # Craft a detailed prompt for dream interpretation
             prompt = f"""
-            You are an expert dream psychologist. Provide a deep, insightful, and compassionate 
-            interpretation of the following dream description. Include:
-            1. Possible symbolic meanings
-            2. Potential psychological insights
-            3. Emotional undertones
-            4. Constructive reflections
+            You are a creative dream interpreter. Given the dream description below, provide an interpretation that is fun and insightful. Avoid emojis. 
+            Return your response in this exact JSON format without any additional text:
+            {{
+            "title": A catchy, meaningful title that captures the essence of the dream with exactly 2 words,
+            "interpretation": A creative and entertaining interpretation of the dream that identifies key symbols and offers positive insights or reflections. Keep the tone light and enjoyable while addressing the main elements of the dream. Make it two paragraph and format curretly.
+            }}
 
-            Dream Description:
-            {description}
-
-            Interpretation:
-            """
-
+            Dream description: {description}""" if (title is None) else f"""
+            You are a creative dream interpreter. Given the dream description below, provide an interpretation that is fun and insightful. Avoid emojis. 
+            Return your response in this exact JSON format without any additional text:
+            {{
+            "interpretation": A creative and entertaining interpretation of the dream that identifies key symbols and offers positive insights or reflections. Keep the tone light and enjoyable while addressing the main elements of the dream. Make it two paragraph and format curretly.
+            }}
+            Dream description: {description}"""
             # Augment prompt with RAG context
             # augmented_prompt = self.rag_service.augment_prompt(description)
             augmented_prompt = prompt
             # Generate interpretation
             print("augmented promnt : \n" + augmented_prompt)
             response = self.model.generate_content(augmented_prompt)
-            # response = augmented_prompt
-            print("hi from interpret dream")
             
-            # Return the text response, handling potential errors
-            # return response
-            return response.text.strip() or "Unable to generate interpretation"
+            # Extract interpretation and title from the response
+            response_text = response.text.strip()
+            
+            try:
+                import json
+                import re
+                
+                # Try to extract JSON content using regex in case there's text before or after the JSON
+                json_match = re.search(r'{[\s\S]*}', response_text)
+                if json_match:
+                    json_str = json_match.group(0)
+                    
+                    # Try to handle cases where single quotes might be used instead of double quotes
+                    # or where there might be escaped quotes
+                    try:
+                        response_json = json.loads(json_str)
+                    except json.JSONDecodeError:
+                        # Try replacing single quotes with double quotes for JSON keys and string values
+                        # This is a simple fix for common LLM formatting issues
+                        fixed_json_str = re.sub(r"'([^']+)':", r'"\1":', json_str)  # Fix keys
+                        fixed_json_str = re.sub(r':\s*\'([^\']+)\'', r': "\1"', fixed_json_str)  # Fix values
+                        try:
+                            response_json = json.loads(fixed_json_str)
+                        except json.JSONDecodeError:
+                            # If that still fails, try a more aggressive conversion (use with caution)
+                            import ast
+                            try:
+                                # Use ast.literal_eval to parse Python dict syntax
+                                response_dict = ast.literal_eval(json_str)
+                                response_json = response_dict
+                            except (SyntaxError, ValueError):
+                                raise json.JSONDecodeError("Failed to parse JSON with alternative methods", json_str, 0)
+                else:
+                    # If no JSON pattern found, try parsing the whole response
+                    response_json = json.loads(response_text)
+                
+                interpretation = response_json.get("interpretation", "Unable to extract interpretation")
+                title = response_json.get("title") if title is None else title
+            except (json.JSONDecodeError, AttributeError) as e:
+                # Handle case where response is not valid JSON
+                print(f"Error parsing JSON from response: {response_text}")
+                print(f"Error details: {str(e)}")
+                
+                # Last resort: try to extract key parts using regex
+                if not title and title is None:
+                    title_match = re.search(r'"title":\s*"([^"]+)"', response_text)
+                    if title_match:
+                        title = title_match.group(1)
+                    else:
+                        title = "Unable to get title"
+                
+                interp_match = re.search(r'"interpretation":\s*"([^"]+)"', response_text)
+                if interp_match:
+                    interpretation = interp_match.group(1)
+                else:
+                    interpretation = "Unable to parse interpretation"
+            
+            print("title: " + (title if title else "None"))
+            print("interpretation: " + interpretation)
+            return interpretation, title
 
         except Exception as e:
             print(f"Error in dream interpretation: {e}")
-            return f"An error occurred during interpretation: {str(e)}"
+            return f"An error occurred during interpretation: {str(e)}", title or "Dream"
 
     def generate_dream_title(self, description: str) -> Optional[str]:
         """

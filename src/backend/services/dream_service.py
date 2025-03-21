@@ -25,17 +25,24 @@ class DreamService:
     ) -> DreamEntry:
    
         # Get AI interpretation
-        interpretation = self.ai_interpreter.interpret_dream(description)
+        # The updated interpret_dream method returns a tuple (interpretation, title)
+        interpretation, ai_title = self.ai_interpreter.interpret_dream(description, title)
         
-        # Generate title if not provided
-        if not title:
-            title = self.ai_interpreter.generate_dream_title(description)
-            title = title[:35]  
+        # Use provided title if available, otherwise use AI-generated title
+        final_title = title or ai_title
+        
+        # If still no title, generate one as fallback
+        if not final_title:
+            final_title = self.ai_interpreter.generate_dream_title(description) or "Untitled Dream"
+            
+        # Ensure title isn't too long
+        if final_title:
+            final_title = final_title[:35]  
 
         # Create dream entry
         dream_entry = DreamEntry(
             user_id=user_id,
-            title=title,
+            title=final_title,
             description=description,
             interpretation=interpretation,
             emotion_tags=",".join(emotions) if emotions else None,
@@ -122,7 +129,11 @@ class DreamService:
         # If description changed, re-interpret the dream
         if description is not None and description != dream.description:
             dream.description = description
-            dream.interpretation = self.ai_interpreter.interpret_dream(description)
+            new_interpretation, new_title = self.ai_interpreter.interpret_dream(description, title)
+            dream.interpretation = new_interpretation
+            # Only update title if not explicitly provided
+            if title is None:
+                dream.title = new_title[:35] if new_title else dream.title
             
         # Update emotions if provided
         if emotions is not None:

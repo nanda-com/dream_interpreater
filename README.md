@@ -23,7 +23,7 @@ An AI-powered dream interpretation API using Google Gemini and FastAPI.
 2. Create a virtual environment
 
 ```bash
-python -m venv venv
+python -m venv venv # to create venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
