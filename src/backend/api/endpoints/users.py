@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 from src.backend.databases import get_db
 from sqlalchemy.future import select
-from src.backend.models.schemas import UserCreate, UserLogin, Token, UserResponse, GuestToRegularConversion, GoogleAuthRequest, GoogleUserInfo
+from src.backend.models.schemas import UserCreate, UserLogin, Token, UserResponse, GuestToRegularConversion, GoogleAuthRequest, GoogleUserInfo, UserUpdateRequest
 from src.backend.utils.auth import hash_password, create_jwt_token, verify_password, verify_token
 from src.backend.utils.oauth.google import verify_google_token
 from src.backend.models import User, DreamEntry, Feedback
@@ -344,3 +344,27 @@ async def delete_guest_on_logout(current_user: User = Depends(get_current_user),
     except Exception as e:
         await db.rollback()
         raise HTTPException(status_code=500, detail=f"Error deleting guest user account: {str(e)}")
+
+@user_router.put("/me", response_model=UserResponse)
+async def update_user(
+    user_data: UserUpdateRequest, 
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Update the current user's profile information.
+    Currently only supports updating the user's name.
+    """
+    # Update the user information
+    current_user.name = user_data.name
+    
+    # Commit the changes to the database
+    await db.commit()
+    
+    # Return updated user info
+    return {
+        "id": current_user.id,
+        "name": current_user.name,
+        "email": current_user.email,
+        "isGuest": current_user.isGuest
+    }

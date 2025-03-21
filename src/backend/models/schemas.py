@@ -104,3 +104,6 @@ class GoogleUserInfo(BaseModel):
     email: str
     name: str
     picture: Optional[str] = None
+
+class UserUpdateRequest(BaseModel):
+    name: str = Field(..., min_length=3, max_length=20, description="Updated name for the user")
