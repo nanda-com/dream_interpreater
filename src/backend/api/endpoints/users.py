@@ -49,7 +49,8 @@ async def login_user(user: UserLogin, db: AsyncSession = Depends(get_db)):
             "id": user_record.id,
             "name": user_record.name,
             "email": user_record.email,
-            "isGuest": user_record.isGuest
+            "isGuest": user_record.isGuest,
+            "date_created": user_record.date_created
         }
     }
 
@@ -77,7 +78,8 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
             "id": user_record.id,
             "name": user_record.name,
             "email": user_record.email,
-            "isGuest": user_record.isGuest
+            "isGuest": user_record.isGuest,
+            "date_created": user_record.date_created
         }
     }
 
@@ -137,7 +139,8 @@ async def create_guest_user(db: AsyncSession = Depends(get_db)):
             "id": guest_user.id,
             "name": guest_user.name,
             "email": guest_user.email,
-            "isGuest": guest_user.isGuest
+            "isGuest": guest_user.isGuest,
+            "date_created": guest_user.date_created
         }
     }
 
@@ -160,7 +163,8 @@ async def get_user_me(current_user: User = Depends(get_current_user)):
         "id": current_user.id,
         "name": current_user.name,
         "email": current_user.email,
-        "isGuest": current_user.isGuest
+        "isGuest": current_user.isGuest,
+        "date_created": current_user.date_created
     }
 
 @user_router.post("/convert-guest")
@@ -203,7 +207,8 @@ async def convert_guest_to_regular(
             "id": current_user.id,
             "name": current_user.name,
             "email": current_user.email,
-            "isGuest": current_user.isGuest
+            "isGuest": current_user.isGuest,
+            "date_created": current_user.date_created
         }
     }
 
@@ -263,7 +268,8 @@ async def login_with_google(google_data: GoogleAuthRequest, db: AsyncSession = D
                 "id": user_record.id,
                 "name": user_record.name,
                 "email": user_record.email,
-                "isGuest": user_record.isGuest
+                "isGuest": user_record.isGuest,
+                "date_created": user_record.date_created
             }
         }
         
@@ -366,5 +372,6 @@ async def update_user(
         "id": current_user.id,
         "name": current_user.name,
         "email": current_user.email,
-        "isGuest": current_user.isGuest
+        "isGuest": current_user.isGuest,
+        "date_created": current_user.date_created
     }

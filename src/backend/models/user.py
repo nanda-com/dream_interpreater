@@ -1,5 +1,6 @@
-from sqlalchemy import Column, Integer, String, Boolean
+from sqlalchemy import Column, Integer, String, Boolean, DateTime
 from src.backend.databases import Base
+from datetime import datetime
 
 class User(Base):
     __tablename__ = 'users'
@@ -10,6 +11,7 @@ class User(Base):
     email = Column(String(30), unique=True, nullable=False)  # New email field
     isGuest = Column(Boolean, default=False, nullable=False)  # New isGuest field
     google_id = Column(String(100), unique=True, nullable=True)  # Google ID for OAuth
+    date_created = Column(DateTime, default=datetime.utcnow, nullable=False)  # Date when user was created
 
     def __repr__(self):
         return f"<User(id={self.id}, name={self.name}, email={self.email}, isGuest={self.isGuest})>"

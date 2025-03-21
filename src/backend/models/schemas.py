@@ -79,6 +79,7 @@ class UserResponse(BaseModel):
     name: str
     email: str
     isGuest: bool
+    date_created: datetime
 
 class DreamInterpretationResponse(BaseModel):
     id: Optional[int] = None
