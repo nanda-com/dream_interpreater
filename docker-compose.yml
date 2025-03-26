@@ -25,6 +25,10 @@ services:
     restart: always
     ports:
       - "8000:8000"
+    environment:
+      # Ensure your FastAPI is configured for reverse proxy
+      - PROXY_HEADERS=1
+      - SERVER_HOST=0.0.0.0
     env_file:
       - .env
 #     depends_on:
