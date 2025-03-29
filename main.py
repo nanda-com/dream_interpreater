@@ -16,7 +16,8 @@ def create_application() -> FastAPI:
         title=settings.APP_NAME,
         description="AI-powered Dream Interpretation API",
         version="1.0.0",
-        swagger_ui_parameters={"persistAuthorization": True}
+        swagger_ui_parameters={"persistAuthorization": True},
+        redirect_slashes=False
     )
 
     # Add CORS middleware
