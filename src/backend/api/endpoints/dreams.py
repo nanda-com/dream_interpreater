@@ -72,7 +72,7 @@ async def list_dreams(
     return dreams
 
 @dream_router.delete(
-    "/{dream_id}",
+    "/{dream_id}/",
     responses={
         200: {"description": "Dream deleted successfully"},
         404: {"description": "Dream not found"},
@@ -102,7 +102,7 @@ async def delete_dream(
     return {"message": "Dream deleted successfully"}
 
 @dream_router.put(
-    "/{dream_id}",
+    "/{dream_id}/",
     response_model=DreamInterpretationResponse,
     responses={
         200: {"description": "Dream updated successfully"},
