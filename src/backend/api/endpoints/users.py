@@ -92,9 +92,11 @@ async def refresh_token(refresh_token: str, db: AsyncSession = Depends(get_db)):
         
         user_id = int(payload.get("sub"))
         new_access_token = create_jwt_token(user_id)
+        new_refresh_token = create_jwt_token(user_id, is_refresh_token=True)
         
         return {
             "access_token": new_access_token,
+            "refresh_token": new_refresh_token,
             "token_type": "bearer"
         }
     except Exception as e:

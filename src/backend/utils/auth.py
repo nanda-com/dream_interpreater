@@ -9,7 +9,7 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 if not SECRET_KEY:
     raise ValueError("SECRET_KEY environment variable is not set")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 1500  # Reduced to 15 minutes
+ACCESS_TOKEN_EXPIRE_MINUTES = 120  # Reduced to 15 minutes
 REFRESH_TOKEN_EXPIRE_DAYS = 30
 
 def hash_password(password: str) -> str:
