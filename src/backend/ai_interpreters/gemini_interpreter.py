@@ -35,14 +35,14 @@ class GeminiDreamInterpreter:
             Return your response in this exact JSON format without any additional text:
             {{
             "title": A catchy, meaningful title that captures the essence of the dream with exactly 2 words,
-            "interpretation": A creative and entertaining interpretation of the dream that identifies key symbols and offers positive insights or reflections. Keep the tone light and enjoyable while addressing the main elements of the dream. Make it two paragraph and format curretly.
+            "interpretation": A creative and entertaining interpretation of the dream that identifies key symbols and offers positive insights or reflections. Keep the tone light and enjoyable while addressing the main elements of the dream. Make it two paragraph and format curretly. Do do use special characters except single quotes, coma, fulstop, hyphen, questionmark, exclamation mark. Strictly avoid double quotes, forward and backword slashes.
             }}
 
             Dream description: {description}""" if (title is None) else f"""
             You are a creative dream interpreter. Given the dream description below, provide an interpretation that is fun and insightful. Avoid emojis. 
             Return your response in this exact JSON format without any additional text:
             {{
-            "interpretation": A creative and entertaining interpretation of the dream that identifies key symbols and offers positive insights or reflections. Keep the tone light and enjoyable while addressing the main elements of the dream. Make it two paragraph and format curretly.
+            "interpretation": A creative and entertaining interpretation of the dream that identifies key symbols and offers positive insights or reflections. Keep the tone light and enjoyable while addressing the main elements of the dream. Make it two paragraph and format curretly. Do do use special characters except single quotes, coma, fulstop, hyphen, questionmark, exclamation mark. Strictly avoid double quotes, forward and backword slashes.
             }}
             Dream description: {description}"""
             # Augment prompt with RAG context
