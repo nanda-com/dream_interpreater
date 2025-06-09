@@ -2,7 +2,7 @@ from typing import List, Optional
 from uuid import uuid4
 from datetime import datetime
 from fastapi import HTTPException
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.backend.models.schemas import DreamInterpretationResponse
@@ -83,8 +83,10 @@ class DreamService:
     ) -> bool:
         """
         Delete a dream entry by ID. Ensures the dream belongs to the user.
+        Also deletes any associated reports to maintain referential integrity.
         Returns True if deletion was successful, False if dream was not found.
         """
+        # First verify the dream exists and belongs to the user
         result = await db.execute(
             select(DreamEntry)
             .where(DreamEntry.id == dream_id)
@@ -95,9 +97,21 @@ class DreamService:
         if not dream:
             return False
             
-        await db.delete(dream)
-        await db.commit()
-        return True
+        try:
+            # First delete any associated reports
+            await db.execute(
+                delete(ReportedDream)
+                .where(ReportedDream.dream_id == dream_id)
+            )
+            
+            # Then delete the dream entry
+            await db.delete(dream)
+            await db.commit()
+            return True
+            
+        except Exception as e:
+            await db.rollback()
+            raise HTTPException(status_code=500, detail=str(e))
         
     async def update_dream(
         self,
