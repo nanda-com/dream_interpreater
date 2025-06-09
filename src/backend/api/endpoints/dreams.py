@@ -3,9 +3,10 @@ from fastapi.security import OAuth2PasswordBearer
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.backend.databases import get_db
-from src.backend.services.dream_service import DreamService
-from src.backend.models.schemas import DreamCreateRequest, DreamInterpretationResponse, DreamUpdateRequest
-from src.backend.utils.auth import verify_token
+from src.backend.services.dream_service import DreamService, get_dream_service
+from src.backend.models.schemas import DreamCreateRequest, DreamInterpretationResponse, DreamUpdateRequest, ReportedDreamCreateRequest, ReportedDreamResponse
+from src.backend.utils.auth import verify_token, get_current_user
+from src.backend.models.user import User
 from src.backend.ai_interpreters.gemini_interpreter import GeminiDreamInterpreter
 from typing import List
 
@@ -137,3 +138,22 @@ async def update_dream(
         raise HTTPException(status_code=404, detail="Dream entry not found")
     
     return updated_dream
+
+@dream_router.post("/{dream_id}/report", response_model=ReportedDreamResponse)
+async def report_dream(
+    dream_id: int,
+    report_data: ReportedDreamCreateRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    dream_service: DreamService = Depends(get_dream_service)
+):
+    """
+    Report a dream entry. Creates a new entry in the reported_dreams table.
+    """
+    report_entry = await dream_service.report_dream(
+        db=db,
+        dream_id=dream_id,
+        user_id=current_user.id,
+        reason=report_data.reason
+    )
+    return report_entry

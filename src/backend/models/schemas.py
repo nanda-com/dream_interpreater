@@ -108,3 +108,13 @@ class GoogleUserInfo(BaseModel):
 
 class UserUpdateRequest(BaseModel):
     name: str = Field(..., min_length=3, max_length=20, description="Updated name for the user")
+
+class ReportedDreamCreateRequest(BaseModel):
+    reason: Optional[str] = Field(None, max_length=200, description="Reason for reporting the dream")
+
+class ReportedDreamResponse(BaseModel):
+    id: int
+    dream_id: int
+    user_id: int
+    reason: Optional[str] = None
+    timestamp: datetime

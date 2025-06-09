@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.backend.models.schemas import DreamInterpretationResponse
 from src.backend.ai_interpreters.gemini_interpreter import GeminiDreamInterpreter
 from src.backend.models.dreamentry import DreamEntry
+from src.backend.models.reported_dream import ReportedDream
 
 class DreamService:
     def __init__(self, ai_interpreter: Optional[GeminiDreamInterpreter] = None):
@@ -146,3 +147,48 @@ class DreamService:
         await db.commit()
         await db.refresh(dream)
         return dream
+
+    async def report_dream(
+        self,
+        db: AsyncSession,
+        dream_id: int,
+        user_id: int,
+        reason: Optional[str] = None
+    ) -> ReportedDream:
+        """
+        Report a dream entry. Creates a new entry in the reported_dreams table.
+        Returns the created report entry.
+        """
+        # First verify the dream exists
+        result = await db.execute(
+            select(DreamEntry)
+            .where(DreamEntry.id == dream_id)
+        )
+        dream = result.scalars().first()
+        
+        if not dream:
+            raise HTTPException(status_code=404, detail="Dream not found")
+            
+        # Create report entry
+        report_entry = ReportedDream(
+            dream_id=dream_id,
+            user_id=user_id,
+            reason=reason,
+            timestamp=datetime.utcnow()
+        )
+        
+        try:
+            db.add(report_entry)
+            await db.commit()
+            await db.refresh(report_entry)
+            return report_entry
+            
+        except Exception as e:
+            await db.rollback()
+            raise HTTPException(status_code=500, detail=str(e))
+
+def get_dream_service() -> DreamService:
+    """
+    Dependency function to get DreamService instance
+    """
+    return DreamService()
