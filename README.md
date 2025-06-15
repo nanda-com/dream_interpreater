@@ -6,6 +6,16 @@
 - 📱 [Google Playstore Link](https://play.google.com/store/apps/details?id=com.tinystars.dreamidiary)
 - 💻 [Frontend Repository](https://github.com/Syamgith/ai-dream-journal-frontend)
 
+### Screenshots
+
+#### Mobile App
+
+<p align="center">
+  <img src="pics/ss1.jpg" alt="Login" width="250"/>
+  <img src="pics/ss3.jpg" alt="Dream List" width="250"/>
+  <img src="pics/ss2.jpg" alt="Add Dream" width="250"/>
+</p>
+
 ## Overview
 
 Dream Journal AI is an advanced application that leverages artificial intelligence to help users record, analyze, and interpret their dreams. Using Google's Gemini AI model and modern web technologies, it provides intelligent dream interpretation and a seamless user experience.
