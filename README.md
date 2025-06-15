@@ -180,39 +180,6 @@ pytest
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Frontend Applications
-
-### Mobile Apps
-
-- **Android**: Available on [Google Play Store](https://play.google.com/store/apps/details?id=com.dreamjournal.ai)
-- **iOS**: Available on [App Store](https://apps.apple.com/app/dream-journal-ai/id1234567890)
-
-### Web Application
-
-- **URL**: [https://dreamjournal.ai](https://dreamjournal.ai)
-- **Repository**: [Frontend GitHub Repository](https://github.com/yourusername/dream-journal-ai-frontend)
-- **Tech Stack**:
-  - React.js
-  - TypeScript
-  - Material-UI
-  - Redux Toolkit
-  - React Query
-
-### Progressive Web App (PWA)
-
-- Installable on desktop and mobile devices
-- Offline support
-- Push notifications for dream reminders
-
-## Support
-
-For support, please:
-
-- 📧 Email: support@dreamjournal.ai
-- 💬 [Discord Community](https://discord.gg/dreamjournal)
-- 📱 [Twitter](https://twitter.com/dreamjournal_ai)
-- 📝 [GitHub Issues](https://github.com/yourusername/dream-journal-ai/issues)
-
 ## Acknowledgments
 
 - Google Gemini AI
