@@ -15,6 +15,9 @@ class GeminiDreamInterpreter:
     def __init__(self, api_key: Optional[str] = None):
         # Directly get the API key from environment variables
         self.api_key = api_key or os.getenv('GOOGLE_API_KEY')
+        llm_modelname = os.getenv('LLM_MODEL_NAME')
+        if not llm_modelname:
+            llm_modelname = 'gemini-2.5-flash-lite'
         
         # Validate API key
         if not self.api_key:
@@ -27,7 +30,7 @@ class GeminiDreamInterpreter:
         genai.configure(api_key=self.api_key)
         
         # Initialize the model
-        self.model = genai.GenerativeModel('gemini-1.5-flash-latest')
+        self.model = genai.GenerativeModel(llm_modelname)
         self.rag_service = DreamRAGService()
 
     def interpret_dream(self, description: str, title: Optional[str] = None) -> tuple[str, str]:
