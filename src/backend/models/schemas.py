@@ -118,3 +118,97 @@ class ReportedDreamResponse(BaseModel):
     user_id: int
     reason: Optional[str] = None
     timestamp: datetime
+
+# Dream Explorer Schemas
+class DreamExplorerQuery(BaseModel):
+    """Schema for asking questions about dream history."""
+    question: str = Field(
+        ...,
+        min_length=3,
+        max_length=500,
+        description="Question about dream history"
+    )
+    chat_history: Optional[List[dict]] = Field(
+        default=[],
+        description="Previous conversation messages"
+    )
+    top_k: Optional[int] = Field(
+        default=None,
+        ge=1,
+        le=20,
+        description="Number of relevant dreams to retrieve"
+    )
+
+class DreamSummary(BaseModel):
+    """Summary of a dream for response."""
+    dream_id: int
+    title: str
+    date: Optional[str] = None
+    relevance_score: float = Field(..., ge=0.0, le=1.0)
+
+class DreamExplorerResponse(BaseModel):
+    """Response from Dream Explorer."""
+    answer: str
+    relevant_dreams: List[DreamSummary]
+    chat_history: List[dict]
+
+class PatternSearchRequest(BaseModel):
+    """Request to find patterns in dream history."""
+    pattern_query: str = Field(
+        ...,
+        min_length=3,
+        max_length=200,
+        description="Description of the pattern to find"
+    )
+    top_k: Optional[int] = Field(
+        default=None,
+        ge=1,
+        le=50,
+        description="Number of dreams to analyze"
+    )
+
+class PatternSearchResponse(BaseModel):
+    """Response with pattern analysis."""
+    pattern_analysis: str
+    relevant_dreams: List[DreamSummary]
+
+class SimilarDreamsRequest(BaseModel):
+    """Request to find similar dreams."""
+    query: Optional[str] = Field(
+        None,
+        min_length=3,
+        max_length=500,
+        description="Search query"
+    )
+    top_k: Optional[int] = Field(
+        default=None,
+        ge=1,
+        le=20,
+        description="Number of similar dreams to return"
+    )
+    start_date: Optional[datetime] = Field(
+        None,
+        description="Filter dreams after this date"
+    )
+    end_date: Optional[datetime] = Field(
+        None,
+        description="Filter dreams before this date"
+    )
+    emotion_tags: Optional[List[str]] = Field(
+        None,
+        description="Filter by emotion tags"
+    )
+
+class SimilarDreamsResponse(BaseModel):
+    """Response with similar dreams."""
+    dreams: List[DreamSummary]
+    total_found: int
+
+class CompareDreamsRequest(BaseModel):
+    """Request to compare two dreams."""
+    dream_id_1: int = Field(..., description="ID of first dream")
+    dream_id_2: int = Field(..., description="ID of second dream")
+
+class CompareDreamsResponse(BaseModel):
+    """Response with dream comparison."""
+    comparison: str

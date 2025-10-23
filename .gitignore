@@ -3,4 +3,6 @@
 venv/
 *.db
 __pycache__/
-
+task.md
+ai_changes_log.md
+rules.md

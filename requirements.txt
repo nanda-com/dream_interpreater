@@ -9,12 +9,14 @@ transformers==4.37.2
 torch==2.0.1
 
 # RAG and AI dependencies
-langchain==0.1.16 
+langchain==0.1.16
 langchain-community==0.0.32
 langchain-core==0.1.42
+langchain-google-genai==0.0.11
 sentence-transformers==2.5.1
 faiss-cpu==1.7.4
 huggingface_hub==0.20.3
+pgvector==0.2.4
 
 # Image Generation
 diffusers==0.15.0

@@ -4,11 +4,13 @@ from datetime import datetime
 from fastapi import HTTPException
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
+from loguru import logger
 
 from src.backend.models.schemas import DreamInterpretationResponse
 from src.backend.ai_interpreters.gemini_interpreter import GeminiDreamInterpreter
 from src.backend.models.dreamentry import DreamEntry
 from src.backend.models.reported_dream import ReportedDream
+from src.backend.services.dream_embedding_service import get_embedding_service
 
 class DreamService:
     def __init__(self, ai_interpreter: Optional[GeminiDreamInterpreter] = None):
@@ -55,11 +57,20 @@ class DreamService:
             db.add(dream_entry)
             await db.commit()
             await db.refresh(dream_entry)
-            
+
+            # Generate and store embedding for the dream
+            try:
+                embedding_service = get_embedding_service()
+                await embedding_service.embed_dream_entry(db, dream_entry)
+                logger.info(f"Generated embedding for dream_id: {dream_entry.id}")
+            except Exception as embed_error:
+                # Log error but don't fail the dream creation
+                logger.error(f"Failed to generate embedding for dream_id {dream_entry.id}: {str(embed_error)}")
+
         except Exception as e:
             print("debug: error adding dream to db: ", e)
             raise HTTPException(status_code=500, detail=str(e))
-        
+
         # print(dream_entry.interpretation)
         return dream_entry
 
@@ -157,9 +168,20 @@ class DreamService:
         # Update timestamp if provided
         if timestamp is not None:
             dream.timestamp = timestamp
-            
+
         await db.commit()
         await db.refresh(dream)
+
+        # Regenerate embedding if content changed
+        if description is not None or title is not None:
+            try:
+                embedding_service = get_embedding_service()
+                await embedding_service.embed_dream_entry(db, dream)
+                logger.info(f"Updated embedding for dream_id: {dream_id}")
+            except Exception as embed_error:
+                # Log error but don't fail the update
+                logger.error(f"Failed to update embedding for dream_id {dream_id}: {str(embed_error)}")
+
         return dream
 
     async def report_dream(
