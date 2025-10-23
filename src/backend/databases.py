@@ -13,7 +13,6 @@ load_dotenv()
 
 # PostgreSQL Async Engine Configuration
 DATABASE_URL = os.getenv("PostgreSQL_URL")
-print(DATABASE_URL)
 
 engine = create_async_engine(
     DATABASE_URL,
