@@ -1,0 +1,110 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.9.1, pytest-7.3.1, pluggy-1.5.0 -- /Users/syamgith/Documents/Apps/ai-dream-journal/venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/syamgith/Documents/Apps/ai-dream-journal
+configfile: pytest.ini
+plugins: asyncio-0.21.1, mock-3.11.1, anyio-4.6.2.post1
+asyncio: mode=auto
+collecting ... collected 61 items
+
+tests/test_api.py::test_database_connection PASSED                       [  1%]
+tests/test_api.py::test_create_dream_entry FAILED                        [  3%]
+tests/test_api.py::test_list_dreams FAILED                               [  4%]
+tests/test_dream_embedding_service.py::TestDreamEmbeddingService::test_service_initialization PASSED [  6%]
+tests/test_dream_embedding_service.py::TestDreamEmbeddingService::test_generate_embedding PASSED [  8%]
+tests/test_dream_embedding_service.py::TestDreamEmbeddingService::test_generate_embedding_empty_text PASSED [  9%]
+tests/test_dream_embedding_service.py::TestDreamEmbeddingService::test_prepare_dream_text_all_fields PASSED [ 11%]
+tests/test_dream_embedding_service.py::TestDreamEmbeddingService::test_prepare_dream_text_partial_fields PASSED [ 13%]
+tests/test_dream_embedding_service.py::TestDreamEmbeddingService::test_store_dream_embedding_new PASSED [ 14%]
+tests/test_dream_embedding_service.py::TestDreamEmbeddingService::test_store_dream_embedding_update_existing PASSED [ 16%]
+tests/test_dream_embedding_service.py::TestDreamEmbeddingService::test_embed_dream_entry PASSED [ 18%]
+tests/test_dream_embedding_service.py::TestDreamEmbeddingService::test_delete_dream_embedding_exists PASSED [ 19%]
+tests/test_dream_embedding_service.py::TestDreamEmbeddingService::test_delete_dream_embedding_not_found PASSED [ 21%]
+tests/test_dream_embedding_service.py::TestDreamEmbeddingService::test_get_embedding_service_singleton PASSED [ 22%]
+tests/test_dream_embedding_service.py::TestDreamEmbeddingService::test_embedding_consistency PASSED [ 24%]
+tests/test_dream_embedding_service.py::TestDreamEmbeddingService::test_store_dream_embedding_rollback_on_error PASSED [ 26%]
+tests/test_dream_explorer_endpoints.py::TestDreamExplorerEndpoints::test_ask_question_success PASSED [ 27%]
+tests/test_dream_explorer_endpoints.py::TestDreamExplorerEndpoints::test_ask_question_unauthorized PASSED [ 29%]
+tests/test_dream_explorer_endpoints.py::TestDreamExplorerEndpoints::test_ask_question_validation_error PASSED [ 31%]
+tests/test_dream_explorer_endpoints.py::TestDreamExplorerEndpoints::test_search_similar_dreams_success PASSED [ 32%]
+tests/test_dream_explorer_endpoints.py::TestDreamExplorerEndpoints::test_search_similar_dreams_no_query PASSED [ 34%]
+tests/test_dream_explorer_endpoints.py::TestDreamExplorerEndpoints::test_find_similar_to_dream_success PASSED [ 36%]
+tests/test_dream_explorer_endpoints.py::TestDreamExplorerEndpoints::test_find_patterns_success PASSED [ 37%]
+tests/test_dream_explorer_endpoints.py::TestDreamExplorerEndpoints::test_compare_dreams_success PASSED [ 39%]
+tests/test_dream_explorer_endpoints.py::TestDreamExplorerEndpoints::test_compare_dreams_not_found PASSED [ 40%]
+tests/test_dream_explorer_endpoints.py::TestDreamExplorerEndpoints::test_health_check_success PASSED [ 42%]
+tests/test_dream_explorer_endpoints.py::TestDreamExplorerEndpoints::test_health_check_failure PASSED [ 44%]
+tests/test_dream_explorer_endpoints.py::TestDreamExplorerEndpoints::test_search_with_date_filters PASSED [ 45%]
+tests/test_dream_explorer_endpoints.py::TestDreamExplorerEndpoints::test_search_with_emotion_tags PASSED [ 47%]
+tests/test_dream_explorer_endpoints.py::TestDreamExplorerEndpoints::test_ask_question_with_chat_history PASSED [ 49%]
+tests/test_dream_explorer_service.py::TestDreamExplorerService::test_service_initialization PASSED [ 50%]
+tests/test_dream_explorer_service.py::TestDreamExplorerService::test_format_dream_context_with_dreams PASSED [ 52%]
+tests/test_dream_explorer_service.py::TestDreamExplorerService::test_format_dream_context_empty PASSED [ 54%]
+tests/test_dream_explorer_service.py::TestDreamExplorerService::test_format_chat_history_with_messages PASSED [ 55%]
+tests/test_dream_explorer_service.py::TestDreamExplorerService::test_format_chat_history_empty PASSED [ 57%]
+tests/test_dream_explorer_service.py::TestDreamExplorerService::test_ask_question_basic SKIPPED [ 59%]
+tests/test_dream_explorer_service.py::TestDreamExplorerService::test_ask_question_with_chat_history SKIPPED [ 60%]
+tests/test_dream_explorer_service.py::TestDreamExplorerService::test_ask_question_custom_top_k SKIPPED [ 62%]
+tests/test_dream_explorer_service.py::TestDreamExplorerService::test_find_patterns SKIPPED [ 63%]
+tests/test_dream_explorer_service.py::TestDreamExplorerService::test_find_patterns_custom_top_k SKIPPED [ 65%]
+tests/test_dream_explorer_service.py::TestDreamExplorerService::test_compare_dreams SKIPPED [ 67%]
+tests/test_dream_explorer_service.py::TestDreamExplorerService::test_compare_dreams_not_found PASSED [ 68%]
+tests/test_dream_explorer_service.py::TestDreamExplorerService::test_get_explorer_service_singleton PASSED [ 70%]
+tests/test_dream_explorer_service.py::TestDreamExplorerService::test_ask_question_no_results SKIPPED [ 72%]
+tests/test_dream_retrieval_service.py::TestDreamRetrievalService::test_service_initialization PASSED [ 73%]
+tests/test_dream_retrieval_service.py::TestDreamRetrievalService::test_search_similar_dreams_basic PASSED [ 75%]
+tests/test_dream_retrieval_service.py::TestDreamRetrievalService::test_search_similar_dreams_with_threshold PASSED [ 77%]
+tests/test_dream_retrieval_service.py::TestDreamRetrievalService::test_search_similar_dreams_with_date_filter PASSED [ 78%]
+tests/test_dream_retrieval_service.py::TestDreamRetrievalService::test_search_similar_dreams_with_emotion_tags PASSED [ 80%]
+tests/test_dream_retrieval_service.py::TestDreamRetrievalService::test_find_similar_to_dream_found PASSED [ 81%]
+tests/test_dream_retrieval_service.py::TestDreamRetrievalService::test_find_similar_to_dream_not_found PASSED [ 83%]
+tests/test_dream_retrieval_service.py::TestDreamRetrievalService::test_search_by_keywords PASSED [ 85%]
+tests/test_dream_retrieval_service.py::TestDreamRetrievalService::test_get_retrieval_service_singleton PASSED [ 86%]
+tests/test_dream_retrieval_service.py::TestDreamRetrievalService::test_search_similar_dreams_custom_top_k PASSED [ 88%]
+tests/test_dream_retrieval_service.py::TestDreamRetrievalService::test_search_similar_dreams_empty_results PASSED [ 90%]
+tests/test_dream_retrieval_service.py::TestDreamRetrievalService::test_get_dream_clusters_placeholder PASSED [ 91%]
+tests/test_dream_service.py::test_dream_interpretation SKIPPED (Lega...) [ 93%]
+tests/test_user_endpoints.py::test_register_user FAILED                  [ 95%]
+tests/test_user_endpoints.py::test_login_user FAILED                     [ 96%]
+tests/test_user_endpoints.py::test_login_invalid_user FAILED             [ 98%]
+tests/test_user_endpoints.py::test_convert_guest_to_regular FAILED       [100%]
+
+=================================== FAILURES ===================================
+/Users/syamgith/Documents/Apps/ai-dream-journal/tests/test_api.py:26: assert 401 == 201
+/Users/syamgith/Documents/Apps/ai-dream-journal/tests/test_api.py:31: assert 401 == 200
+asyncpg/protocol/protocol.pyx:166: RuntimeError: Task <Task pending name='anyio.from_thread.BlockingPortal._call_func' coro=<BlockingPortal._call_func() running at /Users/syamgith/Documents/Apps/ai-dream-journal/venv/lib/python3.9/site-packages/anyio/from_thread.py:221> cb=[TaskGroup._spawn.<locals>.task_done() at /Users/syamgith/Documents/Apps/ai-dream-journal/venv/lib/python3.9/site-packages/anyio/_backends/_asyncio.py:785]> got Future <Future pending cb=[Protocol._on_waiter_completed()]> attached to a different loop
+/Users/syamgith/Documents/Apps/ai-dream-journal/tests/test_user_endpoints.py:21: assert 400 == 200
+asyncpg/protocol/protocol.pyx:166: RuntimeError: Task <Task pending name='anyio.from_thread.BlockingPortal._call_func' coro=<BlockingPortal._call_func() running at /Users/syamgith/Documents/Apps/ai-dream-journal/venv/lib/python3.9/site-packages/anyio/from_thread.py:221> cb=[TaskGroup._spawn.<locals>.task_done() at /Users/syamgith/Documents/Apps/ai-dream-journal/venv/lib/python3.9/site-packages/anyio/_backends/_asyncio.py:785]> got Future <Future pending cb=[Protocol._on_waiter_completed()]> attached to a different loop
+/Users/syamgith/Documents/Apps/ai-dream-journal/tests/test_user_endpoints.py:52: assert 401 == 200
+=============================== warnings summary ===============================
+venv/lib/python3.9/site-packages/starlette/formparsers.py:10
+  /Users/syamgith/Documents/Apps/ai-dream-journal/venv/lib/python3.9/site-packages/starlette/formparsers.py:10: PendingDeprecationWarning: Please use `import python_multipart` instead.
+    import multipart
+
+main.py:112
+  /Users/syamgith/Documents/Apps/ai-dream-journal/main.py:112: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @app.on_event("startup")
+
+venv/lib/python3.9/site-packages/fastapi/applications.py:4495
+  /Users/syamgith/Documents/Apps/ai-dream-journal/venv/lib/python3.9/site-packages/fastapi/applications.py:4495: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    return self.router.on_event(event_type)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_api.py::test_create_dream_entry - assert 401 == 201
+FAILED tests/test_api.py::test_list_dreams - assert 401 == 200
+FAILED tests/test_user_endpoints.py::test_register_user - RuntimeError: Task ...
+FAILED tests/test_user_endpoints.py::test_login_user - assert 400 == 200
+FAILED tests/test_user_endpoints.py::test_login_invalid_user - RuntimeError: ...
+FAILED tests/test_user_endpoints.py::test_convert_guest_to_regular - assert 4...
+============= 6 failed, 47 passed, 8 skipped, 3 warnings in 42.59s =============

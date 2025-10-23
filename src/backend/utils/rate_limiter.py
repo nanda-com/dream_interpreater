@@ -34,10 +34,15 @@ def get_user_identifier(request: Request) -> str:
     return get_remote_address(request)
 
 
+# Check if we're in testing mode
+IS_TESTING = os.getenv("TESTING", "0") == "1"
+
 # Initialize rate limiter
+# In testing mode, set enabled=False to disable rate limiting
 limiter = Limiter(
     key_func=get_user_identifier,
-    default_limits=[os.getenv("DEFAULT_RATE_LIMIT", "100/hour")]
+    default_limits=[os.getenv("DEFAULT_RATE_LIMIT", "100/hour")],
+    enabled=not IS_TESTING
 )
 
 

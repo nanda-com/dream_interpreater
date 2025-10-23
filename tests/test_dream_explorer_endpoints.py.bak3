@@ -292,7 +292,7 @@ class TestDreamExplorerEndpoints:
         async with AsyncClient(app=app, base_url="http://test") as client:
             with patch('src.backend.api.endpoints.dream_explorer.get_retrieval_service') as mock_service:
                 mock_instance = Mock()
-                mock_instance.search_similar_dreams = AsyncMock(return_value=[])
+                mock_instance.search_similar_dreams = AsyncMock(return_value= []
                 mock_service.return_value = mock_instance
 
                 # Make request with date filters
@@ -315,7 +315,7 @@ class TestDreamExplorerEndpoints:
         async with AsyncClient(app=app, base_url="http://test") as client:
             with patch('src.backend.api.endpoints.dream_explorer.get_retrieval_service') as mock_service:
                 mock_instance = Mock()
-                mock_instance.search_similar_dreams = AsyncMock(return_value=[])
+                mock_instance.search_similar_dreams = AsyncMock(return_value= []
                 mock_service.return_value = mock_instance
 
                 # Make request with emotion tags
@@ -337,7 +337,7 @@ class TestDreamExplorerEndpoints:
         async with AsyncClient(app=app, base_url="http://test") as client:
             with patch('src.backend.api.endpoints.dream_explorer.get_explorer_service') as mock_service:
                 mock_instance = Mock()
-                mock_instance.ask_question = AsyncMock(return_value={
+                mock_instance.ask_question = AsyncMock(return_value= {
                     "answer": "Test answer",
                     "relevant_dreams": sample_dream_summaries,
                     "chat_history": [
@@ -346,7 +346,7 @@ class TestDreamExplorerEndpoints:
                         {"role": "user", "content": "New question"},
                         {"role": "assistant", "content": "Test answer"}
                     ]
-                })
+                }
                 mock_service.return_value = mock_instance
 
                 # Make request with chat history

@@ -101,7 +101,6 @@ class TestDreamExplorerService:
 
             assert "No previous conversation" in formatted
 
-    @pytest.mark.skip(reason="LangChain LLMChain cannot be mocked with patch.object due to Pydantic validation")
     @pytest.mark.asyncio
     async def test_ask_question_basic(self, mock_db, sample_dreams):
         """Test asking a question with no chat history."""
@@ -130,7 +129,6 @@ class TestDreamExplorerService:
                     assert len(result["relevant_dreams"]) == 2
                     assert len(result["chat_history"]) == 2  # user + assistant
 
-    @pytest.mark.skip(reason="LangChain LLMChain cannot be mocked with patch.object due to Pydantic validation")
     @pytest.mark.asyncio
     async def test_ask_question_with_chat_history(self, mock_db, sample_dreams):
         """Test asking a follow-up question with existing chat history."""
@@ -142,10 +140,10 @@ class TestDreamExplorerService:
                 {"role": "assistant", "content": "You have many flying dreams"}
             ]
 
-            with patch.object(service.retrieval_service, 'search_similar_dreams', new_callable=AsyncMock) as mock_search:
+            with patch.object(service.retrieval_service, 'search_similar_dreams') as mock_search:
                 mock_search.return_value = sample_dreams
 
-                with patch.object(service.chain, 'arun', new_callable=AsyncMock) as mock_chain:
+                with patch.object(service.chain, 'arun') as mock_chain:
                     mock_chain.return_value = "Based on your previous dreams..."
 
                     result = await service.ask_question(
@@ -158,17 +156,16 @@ class TestDreamExplorerService:
                     # Chat history should be extended
                     assert len(result["chat_history"]) == 4  # 2 existing + 2 new
 
-    @pytest.mark.skip(reason="LangChain LLMChain cannot be mocked")
     @pytest.mark.asyncio
     async def test_ask_question_custom_top_k(self, mock_db, sample_dreams):
         """Test asking a question with custom top_k."""
         with patch.dict('os.environ', {'GOOGLE_API_KEY': 'test_key'}):
             service = DreamExplorerService()
 
-            with patch.object(service.retrieval_service, 'search_similar_dreams', new_callable=AsyncMock) as mock_search:
+            with patch.object(service.retrieval_service, 'search_similar_dreams') as mock_search:
                 mock_search.return_value = sample_dreams
 
-                with patch.object(service.chain, 'arun', new_callable=AsyncMock) as mock_chain:
+                with patch.object(service.chain, 'arun') as mock_chain:
                     mock_chain.return_value = "Test response"
 
                     await service.ask_question(
@@ -182,17 +179,16 @@ class TestDreamExplorerService:
                     mock_search.assert_called_once()
                     assert mock_search.call_args[1]['top_k'] == 10
 
-    @pytest.mark.skip(reason="LangChain ChatGoogleGenerativeAI cannot be mocked")
     @pytest.mark.asyncio
     async def test_find_patterns(self, mock_db, sample_dreams):
         """Test finding patterns in dream history."""
         with patch.dict('os.environ', {'GOOGLE_API_KEY': 'test_key'}):
             service = DreamExplorerService()
 
-            with patch.object(service.retrieval_service, 'search_similar_dreams', new_callable=AsyncMock) as mock_search:
+            with patch.object(service.retrieval_service, 'search_similar_dreams') as mock_search:
                 mock_search.return_value = sample_dreams
 
-                with patch.object(service.llm, 'apredict', new_callable=AsyncMock) as mock_llm:
+                with patch.object(service.llm, 'apredict') as mock_llm:
                     mock_llm.return_value = "Pattern analysis: You often dream about flying..."
 
                     result = await service.find_patterns(
@@ -206,17 +202,16 @@ class TestDreamExplorerService:
                     assert "relevant_dreams" in result
                     assert len(result["relevant_dreams"]) == 2
 
-    @pytest.mark.skip(reason="LangChain ChatGoogleGenerativeAI cannot be mocked")
     @pytest.mark.asyncio
     async def test_find_patterns_custom_top_k(self, mock_db, sample_dreams):
         """Test finding patterns with custom top_k."""
         with patch.dict('os.environ', {'GOOGLE_API_KEY': 'test_key'}):
             service = DreamExplorerService()
 
-            with patch.object(service.retrieval_service, 'search_similar_dreams', new_callable=AsyncMock) as mock_search:
+            with patch.object(service.retrieval_service, 'search_similar_dreams') as mock_search:
                 mock_search.return_value = sample_dreams
 
-                with patch.object(service.llm, 'apredict', new_callable=AsyncMock) as mock_llm:
+                with patch.object(service.llm, 'apredict') as mock_llm:
                     mock_llm.return_value = "Pattern analysis..."
 
                     await service.find_patterns(
@@ -230,7 +225,6 @@ class TestDreamExplorerService:
                     mock_search.assert_called_once()
                     assert mock_search.call_args[1]['top_k'] == 15
 
-    @pytest.mark.skip(reason="LangChain ChatGoogleGenerativeAI cannot be mocked")
     @pytest.mark.asyncio
     async def test_compare_dreams(self, mock_db):
         """Test comparing two dreams."""
@@ -252,7 +246,7 @@ class TestDreamExplorerService:
             mock_result.scalars.return_value.all.return_value = [dream1, dream2]
             mock_db.execute.return_value = mock_result
 
-            with patch.object(service.llm, 'apredict', new_callable=AsyncMock) as mock_llm:
+            with patch.object(service.llm, 'apredict') as mock_llm:
                 mock_llm.return_value = "Comparison: Both dreams involve movement..."
 
                 result = await service.compare_dreams(
@@ -299,17 +293,16 @@ class TestDreamExplorerService:
 
             assert service1 is service2
 
-    @pytest.mark.skip(reason="LangChain LLMChain cannot be mocked")
     @pytest.mark.asyncio
     async def test_ask_question_no_results(self, mock_db):
         """Test asking a question when no relevant dreams are found."""
         with patch.dict('os.environ', {'GOOGLE_API_KEY': 'test_key'}):
             service = DreamExplorerService()
 
-            with patch.object(service.retrieval_service, 'search_similar_dreams', new_callable=AsyncMock) as mock_search:
+            with patch.object(service.retrieval_service, 'search_similar_dreams') as mock_search:
                 mock_search.return_value = []
 
-                with patch.object(service.chain, 'arun', new_callable=AsyncMock) as mock_chain:
+                with patch.object(service.chain, 'arun') as mock_chain:
                     mock_chain.return_value = "I couldn't find relevant dreams..."
 
                     result = await service.ask_question(
