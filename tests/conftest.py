@@ -3,10 +3,14 @@ Pytest configuration and fixtures for all tests.
 """
 import pytest
 import os
+from dotenv import load_dotenv
 from unittest.mock import Mock, patch
 import asyncio
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
+
+# Load environment variables from .env file first
+load_dotenv()
 
 # Set test environment variables before importing app
 os.environ["TESTING"] = "1"
