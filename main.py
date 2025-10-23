@@ -1,11 +1,21 @@
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.security import OAuth2PasswordBearer
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
 from src.backend.databases import create_tables
 from fastapi.middleware.cors import CORSMiddleware
 from src.backend.api.routes import router
 from src.backend.utils.config import get_settings
+from src.backend.utils.rate_limiter import limiter
+from src.backend.utils.error_handlers import (
+    DreamExplorerException,
+    dream_explorer_exception_handler,
+    generic_exception_handler,
+    validation_exception_handler
+)
 from fastapi.openapi.utils import get_openapi
+from slowapi.errors import RateLimitExceeded
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
@@ -19,6 +29,26 @@ def create_application() -> FastAPI:
         swagger_ui_parameters={"persistAuthorization": True},
         redirect_slashes=False
     )
+
+    # Add rate limiter state to app
+    app.state.limiter = limiter
+
+    # Add rate limit exception handler
+    @app.exception_handler(RateLimitExceeded)
+    async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
+        return JSONResponse(
+            status_code=429,
+            content={
+                "error": "Rate limit exceeded",
+                "detail": "Too many requests. Please try again later.",
+                "retry_after": exc.detail
+            }
+        )
+
+    # Add custom exception handlers
+    app.add_exception_handler(DreamExplorerException, dream_explorer_exception_handler)
+    app.add_exception_handler(RequestValidationError, validation_exception_handler)
+    app.add_exception_handler(Exception, generic_exception_handler)
 
     # Add CORS middleware
     app.add_middleware(

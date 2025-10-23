@@ -2,7 +2,7 @@
 Dream Explorer API Endpoints
 Provides conversational interface to explore dream history.
 """
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 from loguru import logger
@@ -10,6 +10,7 @@ from typing import List
 
 from src.backend.databases import get_db
 from src.backend.utils.auth import verify_token
+from src.backend.utils.rate_limiter import limiter, get_rate_limit
 from src.backend.models.schemas import (
     DreamExplorerQuery,
     DreamExplorerResponse,
@@ -41,10 +42,13 @@ dream_explorer_router = APIRouter(
         200: {"description": "Successfully generated response"},
         401: {"description": "Unauthorized"},
         422: {"description": "Validation Error"},
+        429: {"description": "Too Many Requests - Rate limit exceeded"},
         500: {"description": "Internal Server Error"}
     }
 )
+@limiter.limit(get_rate_limit("dream_explorer_ask"))
 async def ask_question(
+    request: Request,
     query: DreamExplorerQuery,
     db: AsyncSession = Depends(get_db),
     token: str = Depends(oauth2_scheme)
@@ -97,10 +101,13 @@ async def ask_question(
     responses={
         200: {"description": "Successfully retrieved similar dreams"},
         401: {"description": "Unauthorized"},
-        422: {"description": "Validation Error"}
+        422: {"description": "Validation Error"},
+        429: {"description": "Too Many Requests - Rate limit exceeded"}
     }
 )
+@limiter.limit(get_rate_limit("dream_explorer_search"))
 async def search_similar_dreams(
+    req: Request,
     request: SimilarDreamsRequest,
     db: AsyncSession = Depends(get_db),
     token: str = Depends(oauth2_scheme)
@@ -175,10 +182,13 @@ async def search_similar_dreams(
     responses={
         200: {"description": "Successfully retrieved similar dreams"},
         401: {"description": "Unauthorized"},
-        404: {"description": "Dream not found"}
+        404: {"description": "Dream not found"},
+        429: {"description": "Too Many Requests - Rate limit exceeded"}
     }
 )
+@limiter.limit(get_rate_limit("dream_explorer_similar"))
 async def find_similar_to_dream(
+    request: Request,
     dream_id: int,
     top_k: int = 5,
     db: AsyncSession = Depends(get_db),
@@ -244,10 +254,13 @@ async def find_similar_to_dream(
     responses={
         200: {"description": "Successfully analyzed patterns"},
         401: {"description": "Unauthorized"},
-        422: {"description": "Validation Error"}
+        422: {"description": "Validation Error"},
+        429: {"description": "Too Many Requests - Rate limit exceeded"}
     }
 )
+@limiter.limit(get_rate_limit("dream_explorer_patterns"))
 async def find_patterns(
+    req: Request,
     request: PatternSearchRequest,
     db: AsyncSession = Depends(get_db),
     token: str = Depends(oauth2_scheme)
@@ -303,10 +316,13 @@ async def find_patterns(
         200: {"description": "Successfully compared dreams"},
         401: {"description": "Unauthorized"},
         404: {"description": "One or both dreams not found"},
-        422: {"description": "Validation Error"}
+        422: {"description": "Validation Error"},
+        429: {"description": "Too Many Requests - Rate limit exceeded"}
     }
 )
+@limiter.limit(get_rate_limit("dream_explorer_compare"))
 async def compare_dreams(
+    req: Request,
     request: CompareDreamsRequest,
     db: AsyncSession = Depends(get_db),
     token: str = Depends(oauth2_scheme)

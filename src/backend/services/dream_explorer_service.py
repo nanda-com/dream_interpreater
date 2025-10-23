@@ -13,6 +13,12 @@ from langchain.chains import LLMChain
 
 from src.backend.services.dream_retrieval_service import get_retrieval_service
 from src.backend.models.dreamentry import DreamEntry
+from src.backend.utils.error_handlers import (
+    LLMGenerationError,
+    DreamNotFoundError,
+    validate_query,
+    ErrorContext
+)
 
 
 # Prompt template for dream exploration
@@ -148,17 +154,24 @@ Interpretation: {dream.interpretation or 'No interpretation'}
 
         Returns:
             Dictionary with answer, relevant dreams, and updated chat history
-        """
-        try:
-            logger.info(f"Processing question for user {user_id}: {question}")
 
+        Raises:
+            LLMGenerationError: If AI response generation fails
+        """
+        # Validate question
+        validate_query(question)
+
+        logger.info(f"Processing question for user {user_id}: {question[:50]}...")
+
+        try:
             # Retrieve relevant dreams
-            similar_dreams = await self.retrieval_service.search_similar_dreams(
-                db=db,
-                user_id=user_id,
-                query=question,
-                top_k=top_k
-            )
+            with ErrorContext("retrieve relevant dreams"):
+                similar_dreams = await self.retrieval_service.search_similar_dreams(
+                    db=db,
+                    user_id=user_id,
+                    query=question,
+                    top_k=top_k
+                )
 
             # Format context
             context = self.format_dream_context(similar_dreams)
@@ -168,11 +181,19 @@ Interpretation: {dream.interpretation or 'No interpretation'}
             history_str = self.format_chat_history(chat_history)
 
             # Generate response using LangChain
-            response = await self.chain.arun(
-                context=context,
-                chat_history=history_str,
-                question=question
-            )
+            try:
+                with ErrorContext("generate AI response", error_class=LLMGenerationError):
+                    response = await self.chain.arun(
+                        context=context,
+                        chat_history=history_str,
+                        question=question
+                    )
+            except Exception as e:
+                logger.error(f"LLM generation failed: {str(e)}")
+                raise LLMGenerationError(
+                    message="Failed to generate response. The AI service may be temporarily unavailable.",
+                    details={"error": str(e)}
+                )
 
             # Update chat history
             updated_history = chat_history + [
@@ -191,7 +212,7 @@ Interpretation: {dream.interpretation or 'No interpretation'}
                 for dream, score in similar_dreams
             ]
 
-            logger.info(f"Generated response for user {user_id}")
+            logger.info(f"Successfully generated response for user {user_id}")
 
             return {
                 "answer": response,
@@ -199,9 +220,15 @@ Interpretation: {dream.interpretation or 'No interpretation'}
                 "chat_history": updated_history
             }
 
-        except Exception as e:
-            logger.error(f"Error in ask_question: {str(e)}")
+        except (LLMGenerationError, DreamNotFoundError):
+            # Re-raise custom exceptions
             raise
+        except Exception as e:
+            logger.error(f"Unexpected error in ask_question: {str(e)}")
+            raise LLMGenerationError(
+                message="An unexpected error occurred while processing your question",
+                details={"error": str(e)}
+            )
 
     async def find_patterns(
         self,

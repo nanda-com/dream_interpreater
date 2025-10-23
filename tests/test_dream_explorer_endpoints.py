@@ -1,0 +1,368 @@
+"""
+Integration tests for Dream Explorer API Endpoints
+"""
+import pytest
+from httpx import AsyncClient
+from unittest.mock import patch, Mock
+from datetime import datetime
+
+from main import app
+from src.backend.models.schemas import (
+    DreamExplorerQuery,
+    PatternSearchRequest,
+    SimilarDreamsRequest,
+    CompareDreamsRequest
+)
+
+
+@pytest.fixture
+def auth_headers():
+    """Create mock authentication headers."""
+    # Mock a valid JWT token
+    return {"Authorization": "Bearer mock_valid_token"}
+
+
+@pytest.fixture
+def mock_verify_token():
+    """Mock token verification."""
+    with patch('src.backend.api.endpoints.dream_explorer.verify_token') as mock:
+        mock.return_value = {"sub": "123"}  # Mock user_id
+        yield mock
+
+
+@pytest.fixture
+def sample_dream_summaries():
+    """Sample dream summaries for responses."""
+    return [
+        {
+            "dream_id": 1,
+            "title": "Flying Dream",
+            "date": "2024-01-15T10:00:00",
+            "relevance_score": 0.92
+        },
+        {
+            "dream_id": 2,
+            "title": "Ocean Dream",
+            "date": "2024-01-10T10:00:00",
+            "relevance_score": 0.85
+        }
+    ]
+
+
+class TestDreamExplorerEndpoints:
+    """Test suite for Dream Explorer API endpoints."""
+
+    @pytest.mark.asyncio
+    async def test_ask_question_success(self, mock_verify_token, auth_headers, sample_dream_summaries):
+        """Test successful question asking."""
+        async with AsyncClient(app=app, base_url="http://test") as client:
+            with patch('src.backend.api.endpoints.dream_explorer.get_explorer_service') as mock_service:
+                # Mock service response
+                mock_instance = Mock()
+                mock_instance.ask_question.return_value = {
+                    "answer": "Your flying dreams represent freedom.",
+                    "relevant_dreams": sample_dream_summaries,
+                    "chat_history": [
+                        {"role": "user", "content": "What do my flying dreams mean?"},
+                        {"role": "assistant", "content": "Your flying dreams represent freedom."}
+                    ]
+                }
+                mock_service.return_value = mock_instance
+
+                # Make request
+                response = await client.post(
+                    "/dream-explorer/ask",
+                    json={
+                        "question": "What do my flying dreams mean?",
+                        "chat_history": [],
+                        "top_k": 5
+                    },
+                    headers=auth_headers
+                )
+
+                # Verify response
+                assert response.status_code == 200
+                data = response.json()
+                assert "answer" in data
+                assert "relevant_dreams" in data
+                assert "chat_history" in data
+
+    @pytest.mark.asyncio
+    async def test_ask_question_unauthorized(self):
+        """Test question asking without authentication."""
+        async with AsyncClient(app=app, base_url="http://test") as client:
+            response = await client.post(
+                "/dream-explorer/ask",
+                json={"question": "Test question"}
+            )
+
+            # Should return 401 Unauthorized
+            assert response.status_code == 401
+
+    @pytest.mark.asyncio
+    async def test_ask_question_validation_error(self, mock_verify_token, auth_headers):
+        """Test question asking with invalid input."""
+        async with AsyncClient(app=app, base_url="http://test") as client:
+            response = await client.post(
+                "/dream-explorer/ask",
+                json={
+                    "question": "ab",  # Too short (min 3 chars)
+                },
+                headers=auth_headers
+            )
+
+            # Should return 422 Validation Error
+            assert response.status_code == 422
+
+    @pytest.mark.asyncio
+    async def test_search_similar_dreams_success(self, mock_verify_token, auth_headers, sample_dream_summaries):
+        """Test successful dream search."""
+        async with AsyncClient(app=app, base_url="http://test") as client:
+            with patch('src.backend.api.endpoints.dream_explorer.get_retrieval_service') as mock_service:
+                # Mock service response
+                mock_instance = Mock()
+                mock_instance.search_similar_dreams.return_value = [
+                    (Mock(id=1, title="Flying Dream", timestamp=datetime(2024, 1, 15)), 0.92),
+                    (Mock(id=2, title="Ocean Dream", timestamp=datetime(2024, 1, 10)), 0.85)
+                ]
+                mock_service.return_value = mock_instance
+
+                # Make request
+                response = await client.post(
+                    "/dream-explorer/search",
+                    json={
+                        "query": "flying dreams",
+                        "top_k": 5
+                    },
+                    headers=auth_headers
+                )
+
+                # Verify response
+                assert response.status_code == 200
+                data = response.json()
+                assert "dreams" in data
+                assert "total_found" in data
+                assert data["total_found"] == 2
+
+    @pytest.mark.asyncio
+    async def test_search_similar_dreams_no_query(self, mock_verify_token, auth_headers):
+        """Test dream search without query."""
+        async with AsyncClient(app=app, base_url="http://test") as client:
+            response = await client.post(
+                "/dream-explorer/search",
+                json={
+                    "query": None,  # No query provided
+                    "top_k": 5
+                },
+                headers=auth_headers
+            )
+
+            # Should return 422 Unprocessable Entity
+            assert response.status_code == 422
+
+    @pytest.mark.asyncio
+    async def test_find_similar_to_dream_success(self, mock_verify_token, auth_headers):
+        """Test finding similar dreams to a specific dream."""
+        async with AsyncClient(app=app, base_url="http://test") as client:
+            with patch('src.backend.api.endpoints.dream_explorer.get_retrieval_service') as mock_service:
+                # Mock service response
+                mock_instance = Mock()
+                mock_instance.find_similar_to_dream.return_value = [
+                    (Mock(id=2, title="Similar Dream", timestamp=datetime(2024, 1, 10)), 0.88)
+                ]
+                mock_service.return_value = mock_instance
+
+                # Make request
+                response = await client.get(
+                    "/dream-explorer/similar/1?top_k=5",
+                    headers=auth_headers
+                )
+
+                # Verify response
+                assert response.status_code == 200
+                data = response.json()
+                assert "dreams" in data
+                assert data["total_found"] == 1
+
+    @pytest.mark.asyncio
+    async def test_find_patterns_success(self, mock_verify_token, auth_headers, sample_dream_summaries):
+        """Test finding patterns in dream history."""
+        async with AsyncClient(app=app, base_url="http://test") as client:
+            with patch('src.backend.api.endpoints.dream_explorer.get_explorer_service') as mock_service:
+                # Mock service response
+                mock_instance = Mock()
+                mock_instance.find_patterns.return_value = {
+                    "pattern_analysis": "You often dream about flying...",
+                    "relevant_dreams": sample_dream_summaries
+                }
+                mock_service.return_value = mock_instance
+
+                # Make request
+                response = await client.post(
+                    "/dream-explorer/patterns",
+                    json={
+                        "pattern_query": "flying dreams",
+                        "top_k": 10
+                    },
+                    headers=auth_headers
+                )
+
+                # Verify response
+                assert response.status_code == 200
+                data = response.json()
+                assert "pattern_analysis" in data
+                assert "relevant_dreams" in data
+
+    @pytest.mark.asyncio
+    async def test_compare_dreams_success(self, mock_verify_token, auth_headers):
+        """Test comparing two dreams."""
+        async with AsyncClient(app=app, base_url="http://test") as client:
+            with patch('src.backend.api.endpoints.dream_explorer.get_explorer_service') as mock_service:
+                # Mock service response
+                mock_instance = Mock()
+                mock_instance.compare_dreams.return_value = "Both dreams involve movement..."
+                mock_service.return_value = mock_instance
+
+                # Make request
+                response = await client.post(
+                    "/dream-explorer/compare",
+                    json={
+                        "dream_id_1": 1,
+                        "dream_id_2": 2
+                    },
+                    headers=auth_headers
+                )
+
+                # Verify response
+                assert response.status_code == 200
+                data = response.json()
+                assert "comparison" in data
+
+    @pytest.mark.asyncio
+    async def test_compare_dreams_not_found(self, mock_verify_token, auth_headers):
+        """Test comparing dreams when one is not found."""
+        async with AsyncClient(app=app, base_url="http://test") as client:
+            with patch('src.backend.api.endpoints.dream_explorer.get_explorer_service') as mock_service:
+                # Mock service to raise ValueError
+                mock_instance = Mock()
+                mock_instance.compare_dreams.side_effect = ValueError("Could not find both dreams")
+                mock_service.return_value = mock_instance
+
+                # Make request
+                response = await client.post(
+                    "/dream-explorer/compare",
+                    json={
+                        "dream_id_1": 1,
+                        "dream_id_2": 999
+                    },
+                    headers=auth_headers
+                )
+
+                # Should return 404
+                assert response.status_code == 404
+
+    @pytest.mark.asyncio
+    async def test_health_check_success(self):
+        """Test health check endpoint."""
+        async with AsyncClient(app=app, base_url="http://test") as client:
+            with patch('src.backend.api.endpoints.dream_explorer.get_explorer_service'):
+                with patch('src.backend.api.endpoints.dream_explorer.get_retrieval_service'):
+                    response = await client.get("/dream-explorer/health")
+
+                    # Verify response
+                    assert response.status_code == 200
+                    data = response.json()
+                    assert data["status"] == "healthy"
+
+    @pytest.mark.asyncio
+    async def test_health_check_failure(self):
+        """Test health check when services fail."""
+        async with AsyncClient(app=app, base_url="http://test") as client:
+            with patch('src.backend.api.endpoints.dream_explorer.get_explorer_service') as mock:
+                mock.side_effect = Exception("Service unavailable")
+
+                response = await client.get("/dream-explorer/health")
+
+                # Should return 503 Service Unavailable
+                assert response.status_code == 503
+
+    @pytest.mark.asyncio
+    async def test_search_with_date_filters(self, mock_verify_token, auth_headers):
+        """Test search with date range filters."""
+        async with AsyncClient(app=app, base_url="http://test") as client:
+            with patch('src.backend.api.endpoints.dream_explorer.get_retrieval_service') as mock_service:
+                mock_instance = Mock()
+                mock_instance.search_similar_dreams.return_value = []
+                mock_service.return_value = mock_instance
+
+                # Make request with date filters
+                response = await client.post(
+                    "/dream-explorer/search",
+                    json={
+                        "query": "test",
+                        "start_date": "2024-01-01T00:00:00",
+                        "end_date": "2024-12-31T23:59:59"
+                    },
+                    headers=auth_headers
+                )
+
+                # Verify response
+                assert response.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_search_with_emotion_tags(self, mock_verify_token, auth_headers):
+        """Test search with emotion tag filters."""
+        async with AsyncClient(app=app, base_url="http://test") as client:
+            with patch('src.backend.api.endpoints.dream_explorer.get_retrieval_service') as mock_service:
+                mock_instance = Mock()
+                mock_instance.search_similar_dreams.return_value = []
+                mock_service.return_value = mock_instance
+
+                # Make request with emotion tags
+                response = await client.post(
+                    "/dream-explorer/search",
+                    json={
+                        "query": "test",
+                        "emotion_tags": ["happy", "excited"]
+                    },
+                    headers=auth_headers
+                )
+
+                # Verify response
+                assert response.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_ask_question_with_chat_history(self, mock_verify_token, auth_headers, sample_dream_summaries):
+        """Test asking question with existing chat history."""
+        async with AsyncClient(app=app, base_url="http://test") as client:
+            with patch('src.backend.api.endpoints.dream_explorer.get_explorer_service') as mock_service:
+                mock_instance = Mock()
+                mock_instance.ask_question.return_value = {
+                    "answer": "Test answer",
+                    "relevant_dreams": sample_dream_summaries,
+                    "chat_history": [
+                        {"role": "user", "content": "Previous question"},
+                        {"role": "assistant", "content": "Previous answer"},
+                        {"role": "user", "content": "New question"},
+                        {"role": "assistant", "content": "Test answer"}
+                    ]
+                }
+                mock_service.return_value = mock_instance
+
+                # Make request with chat history
+                response = await client.post(
+                    "/dream-explorer/ask",
+                    json={
+                        "question": "New question",
+                        "chat_history": [
+                            {"role": "user", "content": "Previous question"},
+                            {"role": "assistant", "content": "Previous answer"}
+                        ]
+                    },
+                    headers=auth_headers
+                )
+
+                # Verify response
+                assert response.status_code == 200
+                data = response.json()
+                assert len(data["chat_history"]) == 4
