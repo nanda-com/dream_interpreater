@@ -38,18 +38,41 @@ async def cleanup_test_data(test_user_emails):
     """
     yield
 
-    # Cleanup test data (delete test users)
+    # Cleanup test data (delete test users and their dreams)
     if test_user_emails:
         try:
             from src.backend.databases import AsyncSessionLocal
             async with AsyncSessionLocal() as session:
                 from sqlalchemy import text
                 for email in test_user_emails:
-                    # Delete user and their associated data (cascading delete should handle dreams, etc.)
-                    await session.execute(
-                        text("DELETE FROM users WHERE email = :email"),
+                    # First get the user_id
+                    result = await session.execute(
+                        text("SELECT id FROM users WHERE email = :email"),
                         {"email": email}
                     )
+                    user = result.fetchone()
+
+                    if user:
+                        user_id = user[0]
+
+                        # Delete dream vectors first (they have CASCADE but being explicit)
+                        await session.execute(
+                            text("DELETE FROM dream_vectors WHERE user_id = :user_id"),
+                            {"user_id": user_id}
+                        )
+
+                        # Delete dreams
+                        await session.execute(
+                            text("DELETE FROM dream_entries WHERE user_id = :user_id"),
+                            {"user_id": user_id}
+                        )
+
+                        # Delete user
+                        await session.execute(
+                            text("DELETE FROM users WHERE id = :user_id"),
+                            {"user_id": user_id}
+                        )
+
                 await session.commit()
         except Exception as e:
             print(f"Warning: Failed to cleanup test users: {e}")
