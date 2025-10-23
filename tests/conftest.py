@@ -4,6 +4,9 @@ Pytest configuration and fixtures for all tests.
 import pytest
 import os
 from unittest.mock import Mock, patch
+import asyncio
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.orm import sessionmaker
 
 # Set test environment variables before importing app
 os.environ["TESTING"] = "1"
@@ -14,6 +17,71 @@ if "GOOGLE_API_KEY" not in os.environ:
 if "JWT_SECRET" not in os.environ:
     os.environ["JWT_SECRET"] = "test-secret-key"
 # Let PostgreSQL_URL come from .env file
+
+
+@pytest.fixture(scope="function")
+def test_user_emails():
+    """
+    Track test user emails for cleanup.
+    Tests can register emails here for automatic cleanup.
+    """
+    emails = []
+    yield emails
+
+
+@pytest.fixture(scope="function", autouse=True)
+async def cleanup_test_data(test_user_emails):
+    """
+    Track test data and clean up after each test.
+    - Deletes test users from database
+    - Cleans up database connections to prevent event loop conflicts
+    """
+    yield
+
+    # Cleanup test data (delete test users)
+    if test_user_emails:
+        try:
+            from src.backend.databases import AsyncSessionLocal
+            async with AsyncSessionLocal() as session:
+                from sqlalchemy import text
+                for email in test_user_emails:
+                    # Delete user and their associated data (cascading delete should handle dreams, etc.)
+                    await session.execute(
+                        text("DELETE FROM users WHERE email = :email"),
+                        {"email": email}
+                    )
+                await session.commit()
+        except Exception as e:
+            print(f"Warning: Failed to cleanup test users: {e}")
+
+    # Force cleanup of database connections after each test
+    # This prevents "attached to a different loop" errors
+    try:
+        from src.backend.databases import engine
+        if engine:
+            # Dispose all connections in the pool to prevent event loop conflicts
+            await engine.dispose()
+            # Recreate the pool for the next test
+            from sqlalchemy.ext.asyncio import create_async_engine
+            from src.backend import databases
+            import os
+            databases.engine = create_async_engine(
+                os.getenv("PostgreSQL_URL"),
+                pool_size=20,
+                max_overflow=10,
+                pool_timeout=30,
+                pool_pre_ping=True
+            )
+            # Update the session factory
+            from sqlalchemy.orm import sessionmaker
+            from sqlalchemy.ext.asyncio import AsyncSession
+            databases.AsyncSessionLocal = sessionmaker(
+                bind=databases.engine,
+                class_=AsyncSession,
+                expire_on_commit=False
+            )
+    except Exception as e:
+        print(f"Warning: Failed to cleanup connections: {e}")
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -38,3 +106,17 @@ def mock_limiter_decorator():
 
     with patch("src.backend.api.endpoints.dream_explorer.limiter.limit", side_effect=noop_decorator):
         yield
+
+
+@pytest.fixture(scope="session", autouse=True)
+def dispose_db_engine():
+    """Dispose database engine after all tests to prevent event loop issues."""
+    yield
+    # Import engine here to ensure it's initialized
+    try:
+        from src.backend.databases import engine
+        if engine:
+            # Use asyncio.run to properly dispose the engine
+            asyncio.run(engine.dispose())
+    except Exception:
+        pass  # Ignore disposal errors at cleanup
