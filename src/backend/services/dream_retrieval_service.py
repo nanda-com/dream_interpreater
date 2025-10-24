@@ -289,6 +289,152 @@ class DreamRetrievalService:
             logger.error(f"Error in keyword search: {str(e)}")
             raise
 
+    async def search_by_text(
+        self,
+        db: AsyncSession,
+        user_id: int,
+        query: str,
+        top_k: Optional[int] = None,
+        semantic_rerank: bool = True
+    ) -> List[Tuple[DreamEntry, float]]:
+        """
+        Search dreams by text pattern matching in the description field.
+        This is a fallback when both semantic search and keyword search return no results.
+        Uses PostgreSQL ILIKE for case-insensitive pattern matching.
+
+        Args:
+            db: Database session
+            user_id: ID of the user
+            query: Query string (will extract search terms from this)
+            top_k: Number of results to return
+            semantic_rerank: If True, re-rank results by semantic similarity (default True)
+
+        Returns:
+            List of tuples (DreamEntry, match_score) ordered by relevance
+        """
+        try:
+            import string
+
+            # Extract search terms (remove stop words, strip punctuation)
+            stop_words = {
+                'i', 'did', 'have', 'dream', 'about', 'of', 'the', 'a', 'an',
+                'my', 'me', 'was', 'were', 'is', 'are', 'in', 'on', 'at', 'to',
+                'from', 'with', 'and', 'or', 'but', 'for', 'this', 'that'
+            }
+
+            search_terms = [
+                word.strip().lower().strip(string.punctuation)
+                for word in query.split()
+                if word.strip().lower().strip(string.punctuation) not in stop_words and len(word.strip()) > 2
+            ]
+
+            if not search_terms:
+                return []
+
+            logger.info(f"Text search for terms: {search_terms}")
+
+            # Build ILIKE conditions for each search term
+            # Match if description contains ANY of the search terms
+            from sqlalchemy import or_, and_
+
+            ilike_conditions = [
+                DreamEntry.description.ilike(f"%{term}%")
+                for term in search_terms
+            ]
+
+            query_stmt = (
+                select(DreamEntry)
+                .where(
+                    and_(
+                        DreamEntry.user_id == user_id,
+                        or_(*ilike_conditions)
+                    )
+                )
+                .order_by(DreamEntry.timestamp.desc())
+                .limit(top_k or self.default_top_k)
+            )
+
+            # Execute query
+            result = await db.execute(query_stmt)
+            dreams = result.scalars().all()
+
+            if not dreams:
+                return []
+
+            # Calculate initial match score based on number of matching terms found
+            results = []
+            for dream in dreams:
+                description_lower = dream.description.lower() if dream.description else ""
+                matches = sum(1 for term in search_terms if term in description_lower)
+                total = len(search_terms)
+                score = matches / total if total > 0 else 0.0
+                results.append((dream, score))
+
+            # Optional: Re-rank by semantic similarity for better ordering
+            if semantic_rerank:
+                logger.info("Re-ranking text search results by semantic similarity")
+                try:
+                    # Generate query embedding
+                    query_embedding = self.embedding_service.generate_embedding(query)
+
+                    # Get dream IDs to fetch their embeddings
+                    dream_ids = [dream.id for dream, _ in results]
+
+                    # Fetch embeddings for these dreams
+                    embedding_result = await db.execute(
+                        select(DreamVector)
+                        .where(DreamVector.dream_id.in_(dream_ids))
+                    )
+                    dream_vectors = {dv.dream_id: dv.embedding for dv in embedding_result.scalars().all()}
+
+                    # Calculate cosine similarity in memory for efficiency
+                    import numpy as np
+                    query_vec = np.array(query_embedding)
+                    query_norm = np.linalg.norm(query_vec)
+
+                    reranked_results = []
+                    for dream, text_score in results:
+                        if dream.id in dream_vectors:
+                            # Calculate cosine similarity: dot(a,b) / (norm(a) * norm(b))
+                            dream_vec = np.array(dream_vectors[dream.id])
+                            dream_norm = np.linalg.norm(dream_vec)
+
+                            if query_norm > 0 and dream_norm > 0:
+                                cosine_sim = np.dot(query_vec, dream_vec) / (query_norm * dream_norm)
+                                semantic_score = float(cosine_sim)
+                            else:
+                                semantic_score = 0.0
+
+                            # Hybrid score: 70% semantic, 30% text match
+                            # This balances semantic relevance with exact word matches
+                            hybrid_score = 0.7 * semantic_score + 0.3 * text_score
+                            reranked_results.append((dream, hybrid_score))
+                        else:
+                            # No embedding found, keep text score
+                            reranked_results.append((dream, text_score))
+
+                    # Sort by hybrid score
+                    reranked_results.sort(key=lambda x: x[1], reverse=True)
+                    results = reranked_results
+
+                except Exception as e:
+                    logger.warning(f"Semantic re-ranking failed, using text scores: {str(e)}")
+                    # Fall back to text-only scores
+                    results.sort(key=lambda x: x[1], reverse=True)
+            else:
+                # Sort by text score only
+                results.sort(key=lambda x: x[1], reverse=True)
+
+            logger.info(
+                f"Found {len(results)} dreams by text search for user {user_id}"
+            )
+
+            return results
+
+        except Exception as e:
+            logger.error(f"Error in text search: {str(e)}")
+            raise
+
 
 # Singleton instance
 _retrieval_service: Optional[DreamRetrievalService] = None
