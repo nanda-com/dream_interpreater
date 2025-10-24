@@ -1,4 +1,5 @@
 from sqlalchemy import Column, ForeignKey, Integer, String, Text, DateTime
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from src.backend.databases import Base
@@ -13,6 +14,7 @@ class DreamEntry(Base):
     email = Column(String(100), nullable=True)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
     emotion_tags = Column(String(100))
+    keywords = Column(ARRAY(String), nullable=True)  # AI-extracted keywords for search
     image_url = Column(String(200))
     video_url = Column(String(200))
     timestamp = Column(DateTime, default=datetime.utcnow, index=True)

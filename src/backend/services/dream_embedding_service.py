@@ -47,44 +47,46 @@ class DreamEmbeddingService:
         title: Optional[str],
         description: str,
         interpretation: Optional[str],
-        emotion_tags: Optional[str] = None
+        emotion_tags: Optional[str] = None,
+        keywords: Optional[list[str]] = None
     ) -> str:
         """
         Prepare comprehensive text from dream components for embedding.
 
-        Weights description 6x higher than other components by repeating it,
-        ensuring that semantic search matches dream content more accurately.
-        Also includes emotion tags for emotion-based queries.
+        Weights AI-extracted keywords 10x higher for maximum search accuracy,
+        while keeping full description 2x for context.
 
         Args:
             title: Dream title
             description: Dream description
             interpretation: Dream interpretation
             emotion_tags: Comma-separated emotion tags
+            keywords: AI-extracted key content words (nouns, verbs, adjectives)
 
         Returns:
-            Combined text for embedding with weighted description
+            Combined text for embedding with weighted keywords
         """
         parts = []
 
-        # Add description 6 times at the beginning for higher weight
-        # This ensures short descriptions like "i saw rat" aren't diluted
-        # by long AI-generated interpretations
-        if description:
-            parts.append(f"{description}")
-            parts.append(f"{description}")
-            parts.append(f"{description}")
-            parts.append(f"{description}")
-            parts.append(f"{description}")
-            parts.append(f"{description}")
+        # Add each keyword individually 10 times for maximum weight
+        # Each keyword gets its own 10x boost for stronger single-word matching
+        # E.g., "flying" × 10, "mountains" × 10, "soaring" × 10
+        if keywords and len(keywords) > 0:
+            for keyword in keywords:
+                for _ in range(10):
+                    parts.append(keyword)
 
-        # Add emotion tags 6 times for emotion-based queries (same weight as description)
-        # This helps queries like "What emotions appear most in my dreams?"
+        # Add full description 2 times for context
+        # This preserves meaning while letting keywords dominate
+        if description:
+            parts.append(description)
+            parts.append(description)
+
+        # Add emotion tags 3 times for emotion-based queries (half weight of description)
+        # This balances content queries (flying) with emotion queries (what emotions)
+        # Meta-questions about emotions will use the special handler, not semantic search
         if emotion_tags:
             emotion_text = f"Emotions: {emotion_tags}"
-            parts.append(emotion_text)
-            parts.append(emotion_text)
-            parts.append(emotion_text)
             parts.append(emotion_text)
             parts.append(emotion_text)
             parts.append(emotion_text)
@@ -98,7 +100,7 @@ class DreamEmbeddingService:
         # Only include a short excerpt of interpretation to avoid dilution
         # Limit to first 100 characters
         if interpretation:
-            interpretation_excerpt = interpretation[:100] if len(interpretation) > 100 else interpretation
+            interpretation_excerpt = interpretation[:50] if len(interpretation) > 50 else interpretation
             parts.append(f"Interpretation: {interpretation_excerpt}")
 
         return " ".join(parts)
@@ -160,7 +162,8 @@ class DreamEmbeddingService:
     async def embed_dream_entry(
         self,
         db: AsyncSession,
-        dream_entry: DreamEntry
+        dream_entry: DreamEntry,
+        keywords: Optional[list[str]] = None
     ) -> DreamVector:
         """
         Generate and store embedding for a complete dream entry.
@@ -168,16 +171,18 @@ class DreamEmbeddingService:
         Args:
             db: Database session
             dream_entry: The DreamEntry object to embed
+            keywords: Optional AI-extracted keywords for weighted embedding
 
         Returns:
             The created DreamVector object
         """
-        # Prepare text from dream components including emotion tags
+        # Prepare text from dream components including emotion tags and keywords
         text = self.prepare_dream_text(
             title=dream_entry.title,
             description=dream_entry.description,
             interpretation=dream_entry.interpretation,
-            emotion_tags=dream_entry.emotion_tags
+            emotion_tags=dream_entry.emotion_tags,
+            keywords=keywords
         )
 
         # Store the embedding

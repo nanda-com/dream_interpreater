@@ -28,8 +28,8 @@ class DreamService:
     ) -> DreamEntry:
    
         # Get AI interpretation
-        # The updated interpret_dream method returns a tuple (interpretation, title, emotions)
-        interpretation, ai_title, ai_emotions = self.ai_interpreter.interpret_dream(description, title)
+        # The updated interpret_dream method returns a tuple (interpretation, title, emotions, keywords)
+        interpretation, ai_title, ai_emotions, ai_keywords = self.ai_interpreter.interpret_dream(description, title)
 
         # Use provided title if available, otherwise use AI-generated title
         final_title = title or ai_title
@@ -52,6 +52,7 @@ class DreamService:
             description=description,
             interpretation=interpretation,
             emotion_tags=",".join(final_emotions) if final_emotions else None,
+            keywords=ai_keywords,  # Store AI-extracted keywords for fallback search
             timestamp=timestamp or datetime.utcnow()
         )
 
@@ -61,10 +62,10 @@ class DreamService:
             await db.commit()
             await db.refresh(dream_entry)
 
-            # Generate and store embedding for the dream
+            # Generate and store embedding for the dream with keywords
             try:
                 embedding_service = get_embedding_service()
-                await embedding_service.embed_dream_entry(db, dream_entry)
+                await embedding_service.embed_dream_entry(db, dream_entry, keywords=ai_keywords)
                 logger.info(f"Generated embedding for dream_id: {dream_entry.id}")
             except Exception as embed_error:
                 # Log error but don't fail the dream creation
@@ -156,9 +157,10 @@ class DreamService:
             dream.title = title
             
         # If description changed, re-interpret the dream
+        new_keywords = []
         if description is not None and description != dream.description:
             dream.description = description
-            new_interpretation, new_title, new_emotions = self.ai_interpreter.interpret_dream(description, title)
+            new_interpretation, new_title, new_emotions, new_keywords = self.ai_interpreter.interpret_dream(description, title)
             dream.interpretation = new_interpretation
             # Only update title if not explicitly provided
             if title is None:
@@ -166,7 +168,10 @@ class DreamService:
             # Only update emotions if not explicitly provided
             if emotions is None and new_emotions:
                 dream.emotion_tags = ",".join(new_emotions)
-            
+            # Update keywords
+            if new_keywords:
+                dream.keywords = new_keywords
+
         # Update emotions if provided
         if emotions is not None:
             dream.emotion_tags = ",".join(emotions) if emotions else None
@@ -182,7 +187,7 @@ class DreamService:
         if description is not None or title is not None:
             try:
                 embedding_service = get_embedding_service()
-                await embedding_service.embed_dream_entry(db, dream)
+                await embedding_service.embed_dream_entry(db, dream, keywords=new_keywords)
                 logger.info(f"Updated embedding for dream_id: {dream_id}")
             except Exception as embed_error:
                 # Log error but don't fail the update

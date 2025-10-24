@@ -198,6 +198,20 @@ Interpretation: {dream.interpretation or 'No interpretation'}
                         top_k=top_k
                     )
 
+                # FALLBACK: If no results from semantic search, try keyword-based search
+                if len(similar_dreams) == 0:
+                    logger.info("Semantic search returned 0 results, trying keyword fallback")
+                    with ErrorContext("retrieve dreams by keyword"):
+                        similar_dreams = await self.retrieval_service.search_by_keywords(
+                            db=db,
+                            user_id=user_id,
+                            query=question,
+                            top_k=top_k
+                        )
+
+                    if len(similar_dreams) > 0:
+                        logger.info(f"Keyword fallback found {len(similar_dreams)} dreams")
+
             # Format context
             context = self.format_dream_context(similar_dreams)
 

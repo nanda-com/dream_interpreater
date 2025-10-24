@@ -33,7 +33,7 @@ class GeminiDreamInterpreter:
         self.model = genai.GenerativeModel(llm_modelname)
         self.rag_service = DreamRAGService()
 
-    def interpret_dream(self, description: str, title: Optional[str] = None) -> tuple[str, str, list[str]]:
+    def interpret_dream(self, description: str, title: Optional[str] = None) -> tuple[str, str, list[str], list[str]]:
         try:
             # Define JSON schema based on whether a title is needed
             if title is None:
@@ -41,14 +41,16 @@ class GeminiDreamInterpreter:
 {{
     "title": "A catchy, creative, meaningful title with exactly TWO words that captures the essence of the dream.",
     "interpretation": "A creative and entertaining interpretation of the dream that identifies key symbols and offers positive insights or reflections. Keep the tone light and enjoyable while addressing the main elements of the dream. Strictly make it TWO paragraphs long. Do not use special characters other than single quotes, commas, periods, hyphens, question marks, and exclamation marks. Strictly avoid double quotes, and slashes.",
-    "emotions": ["List of 2-4 primary emotions experienced in the dream. Use simple, common emotion words like: anxious, happy, scared, peaceful, confused, excited, sad, angry, curious, relieved, joyful, fearful, frustrated, content, etc."]
+    "emotions": ["List of 2-4 primary emotions experienced in the dream. Use simple, common emotion words like: anxious, happy, scared, peaceful, confused, excited, sad, angry, curious, relieved, joyful, fearful, frustrated, content, etc."],
+    "keywords": ["List of 3-6 key content words from the dream description that are most important for searching. Extract nouns, verbs, and adjectives that capture the core content. Examples: flying, mountains, water, chasing, falling, family, ocean, snake, running, dark, bright, etc. Exclude common words like: I, was, the, and, but, very, really, etc."]
 }}
 """
             else:
                 json_schema = """
 {{
     "interpretation": "A creative and entertaining interpretation of the dream that identifies key symbols and offers positive insights or reflections. Keep the tone light and enjoyable while addressing the main elements of the dream. Strictly make it two paragraphs long. Do not use special characters other than single quotes, commas, periods, hyphens, question marks, and exclamation marks. Strictly avoid double quotes, and slashes.",
-    "emotions": ["List of 2-4 primary emotions experienced in the dream. Use simple, common emotion words like: anxious, happy, scared, peaceful, confused, excited, sad, angry, curious, relieved, joyful, fearful, frustrated, content, etc."]
+    "emotions": ["List of 2-4 primary emotions experienced in the dream. Use simple, common emotion words like: anxious, happy, scared, peaceful, confused, excited, sad, angry, curious, relieved, joyful, fearful, frustrated, content, etc."],
+    "keywords": ["List of 3-6 key content words from the dream description that are most important for searching. Extract nouns, verbs, and adjectives that capture the core content. Examples: flying, mountains, water, chasing, falling, family, ocean, snake, running, dark, bright, etc. Exclude common words like: I, was, the, and, but, very, really, etc."]
 }}
 """
             
@@ -128,6 +130,7 @@ Dream description: {description}
             final_title = title
             interpretation = "Could not parse dream interpretation."
             emotions = []
+            keywords = []
 
             if response_json:
                 interpretation = response_json.get("interpretation", interpretation)
@@ -141,6 +144,14 @@ Dream description: {description}
                     emotions = [e.strip().lower() for e in emotions_raw if isinstance(e, str)]
                     emotions = [e for e in emotions if 3 <= len(e) <= 15 and e.replace(' ', '').isalpha()]
                     emotions = emotions[:4]  # Limit to 4 emotions
+
+                # Extract keywords from JSON
+                keywords_raw = response_json.get("keywords", [])
+                if isinstance(keywords_raw, list):
+                    # Filter and clean keywords
+                    keywords = [k.strip().lower() for k in keywords_raw if isinstance(k, str)]
+                    keywords = [k for k in keywords if 2 <= len(k) <= 20 and k.replace(' ', '').isalpha()]
+                    keywords = keywords[:6]  # Limit to 6 keywords
             else:
                 # Fallback to regex if JSON parsing fails
                 print(f"Failed to parse JSON, falling back to regex. Response was: {response_text}")
@@ -164,16 +175,27 @@ Dream description: {description}
                     emotions = [e for e in emotions if 3 <= len(e) <= 15 and e.replace(' ', '').isalpha()]
                     emotions = emotions[:4]
 
+                # Extract keywords array from regex
+                keywords_match = re.search(r'["\']keywords["\']\s*:\s*\[(.*?)\]', cleaned_text, re.DOTALL | re.IGNORECASE)
+                if keywords_match:
+                    keywords_str = keywords_match.group(1)
+                    # Extract keyword strings from array
+                    keyword_items = re.findall(r'["\']([^"\']+)["\']', keywords_str)
+                    keywords = [k.strip().lower() for k in keyword_items if k.strip()]
+                    keywords = [k for k in keywords if 2 <= len(k) <= 20 and k.replace(' ', '').isalpha()]
+                    keywords = keywords[:6]
+
             final_title = final_title or "Dream Entry"
 
             print("title: " + (final_title if final_title else "None"))
             print("interpretation: " + interpretation)
             print("emotions: " + str(emotions))
-            return interpretation, final_title, emotions
+            print("keywords: " + str(keywords))
+            return interpretation, final_title, emotions, keywords
 
         except Exception as e:
             print(f"An unexpected error occurred in dream interpretation: {e}")
-            return f"An error occurred during interpretation: {str(e)}", title or "Dream", []
+            return f"An error occurred during interpretation: {str(e)}", title or "Dream", [], []
 
     def generate_dream_title(self, description: str) -> Optional[str]:
         """

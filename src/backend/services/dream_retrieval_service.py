@@ -216,37 +216,77 @@ class DreamRetrievalService:
         self,
         db: AsyncSession,
         user_id: int,
-        keywords: List[str],
+        query: str,
         top_k: Optional[int] = None
     ) -> List[Tuple[DreamEntry, float]]:
         """
-        Search dreams by combining keyword matching with semantic search.
+        Search dreams by keyword matching in the keywords array field.
+        This is a fallback when semantic search returns no results.
 
         Args:
             db: Database session
             user_id: ID of the user
-            keywords: List of keywords to search for
+            query: Query string (will extract keywords from this)
             top_k: Number of results to return
 
         Returns:
-            List of tuples (DreamEntry, relevance_score)
+            List of tuples (DreamEntry, match_score) ordered by relevance
         """
         try:
-            # Combine keywords into a query
-            query = " ".join(keywords)
+            from sqlalchemy import func, or_, and_
 
-            # Perform semantic search
-            results = await self.search_similar_dreams(
-                db=db,
-                user_id=user_id,
-                query=query,
-                top_k=top_k
+            # Extract keywords from query (split by spaces, remove common words and punctuation)
+            import string
+            stop_words = {'i', 'did', 'have', 'dream', 'about', 'of', 'the', 'a', 'an', 'my', 'me', 'was', 'were', 'is', 'are'}
+            query_keywords = [
+                word.strip().lower().strip(string.punctuation)  # Remove punctuation like ? ! . ,
+                for word in query.split()
+                if word.strip().lower().strip(string.punctuation) not in stop_words and len(word.strip()) > 0
+            ]
+
+            if not query_keywords:
+                return []
+
+            logger.info(f"Searching by keywords: {query_keywords}")
+
+            # Build query to match any keyword in the array
+            # Using PostgreSQL array overlap operator &&
+            query_stmt = (
+                select(DreamEntry)
+                .where(
+                    and_(
+                        DreamEntry.user_id == user_id,
+                        DreamEntry.keywords.overlap(query_keywords)  # PostgreSQL array overlap
+                    )
+                )
+                .order_by(DreamEntry.timestamp.desc())
+                .limit(top_k or self.default_top_k)
+            )
+
+            # Execute query
+            result = await db.execute(query_stmt)
+            dreams = result.scalars().all()
+
+            # Calculate match score based on number of matching keywords
+            results = []
+            for dream in dreams:
+                if dream.keywords:
+                    matches = len(set(dream.keywords) & set(query_keywords))
+                    total = len(query_keywords)
+                    score = matches / total if total > 0 else 0.0
+                    results.append((dream, score))
+
+            # Sort by score descending
+            results.sort(key=lambda x: x[1], reverse=True)
+
+            logger.info(
+                f"Found {len(results)} dreams by keyword matching for user {user_id}"
             )
 
             return results
 
         except Exception as e:
-            logger.error(f"Error searching by keywords: {str(e)}")
+            logger.error(f"Error in keyword search: {str(e)}")
             raise
 
 
