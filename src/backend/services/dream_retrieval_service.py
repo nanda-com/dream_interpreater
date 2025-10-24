@@ -217,7 +217,8 @@ class DreamRetrievalService:
         db: AsyncSession,
         user_id: int,
         query: str,
-        top_k: Optional[int] = None
+        top_k: Optional[int] = None,
+        semantic_rerank: bool = True
     ) -> List[Tuple[DreamEntry, float]]:
         """
         Search dreams by keyword matching in the keywords array field.
@@ -228,6 +229,7 @@ class DreamRetrievalService:
             user_id: ID of the user
             query: Query string (will extract keywords from this)
             top_k: Number of results to return
+            semantic_rerank: If True, re-rank results by semantic similarity (default True)
 
         Returns:
             List of tuples (DreamEntry, match_score) ordered by relevance
@@ -267,7 +269,10 @@ class DreamRetrievalService:
             result = await db.execute(query_stmt)
             dreams = result.scalars().all()
 
-            # Calculate match score based on number of matching keywords
+            if not dreams:
+                return []
+
+            # Calculate initial match score based on number of matching keywords
             results = []
             for dream in dreams:
                 if dream.keywords:
@@ -276,8 +281,60 @@ class DreamRetrievalService:
                     score = matches / total if total > 0 else 0.0
                     results.append((dream, score))
 
-            # Sort by score descending
-            results.sort(key=lambda x: x[1], reverse=True)
+            # Optional: Re-rank by semantic similarity for better ordering
+            if semantic_rerank:
+                logger.info("Re-ranking keyword search results by semantic similarity")
+                try:
+                    # Generate query embedding
+                    query_embedding = self.embedding_service.generate_embedding(query)
+
+                    # Get dream IDs to fetch their embeddings
+                    dream_ids = [dream.id for dream, _ in results]
+
+                    # Fetch embeddings for these dreams
+                    embedding_result = await db.execute(
+                        select(DreamVector)
+                        .where(DreamVector.dream_id.in_(dream_ids))
+                    )
+                    dream_vectors = {dv.dream_id: dv.embedding for dv in embedding_result.scalars().all()}
+
+                    # Calculate cosine similarity in memory for efficiency
+                    import numpy as np
+                    query_vec = np.array(query_embedding)
+                    query_norm = np.linalg.norm(query_vec)
+
+                    reranked_results = []
+                    for dream, keyword_score in results:
+                        if dream.id in dream_vectors:
+                            # Calculate cosine similarity: dot(a,b) / (norm(a) * norm(b))
+                            dream_vec = np.array(dream_vectors[dream.id])
+                            dream_norm = np.linalg.norm(dream_vec)
+
+                            if query_norm > 0 and dream_norm > 0:
+                                cosine_sim = np.dot(query_vec, dream_vec) / (query_norm * dream_norm)
+                                semantic_score = float(cosine_sim)
+                            else:
+                                semantic_score = 0.0
+
+                            # Hybrid score: 60% semantic, 40% keyword match
+                            # Keyword match gets slightly more weight than text search since it's more reliable
+                            hybrid_score = 0.6 * semantic_score + 0.4 * keyword_score
+                            reranked_results.append((dream, hybrid_score))
+                        else:
+                            # No embedding found, keep keyword score
+                            reranked_results.append((dream, keyword_score))
+
+                    # Sort by hybrid score
+                    reranked_results.sort(key=lambda x: x[1], reverse=True)
+                    results = reranked_results
+
+                except Exception as e:
+                    logger.warning(f"Semantic re-ranking failed, using keyword scores: {str(e)}")
+                    # Fall back to keyword-only scores
+                    results.sort(key=lambda x: x[1], reverse=True)
+            else:
+                # Sort by keyword score only
+                results.sort(key=lambda x: x[1], reverse=True)
 
             logger.info(
                 f"Found {len(results)} dreams by keyword matching for user {user_id}"

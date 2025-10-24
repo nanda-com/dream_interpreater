@@ -140,7 +140,7 @@ async def search_similar_dreams(
         # Get retrieval service
         retrieval_service = get_retrieval_service()
 
-        # Search for similar dreams
+        # Search for similar dreams with 3-level fallback
         similar_dreams = await retrieval_service.search_similar_dreams(
             db=db,
             user_id=user_id,
@@ -150,6 +150,32 @@ async def search_similar_dreams(
             end_date=search_request.end_date,
             emotion_tags=search_request.emotion_tags
         )
+
+        # FALLBACK LEVEL 1: If no results from semantic search, try keyword-based search
+        if len(similar_dreams) == 0:
+            logger.info("Semantic search returned 0 results, trying keyword fallback")
+            similar_dreams = await retrieval_service.search_by_keywords(
+                db=db,
+                user_id=user_id,
+                query=search_request.query,
+                top_k=search_request.top_k
+            )
+
+            if len(similar_dreams) > 0:
+                logger.info(f"Keyword fallback found {len(similar_dreams)} dreams")
+
+        # FALLBACK LEVEL 2: If still no results, try text pattern search
+        if len(similar_dreams) == 0:
+            logger.info("Keyword search returned 0 results, trying text search fallback")
+            similar_dreams = await retrieval_service.search_by_text(
+                db=db,
+                user_id=user_id,
+                query=search_request.query,
+                top_k=search_request.top_k
+            )
+
+            if len(similar_dreams) > 0:
+                logger.info(f"Text search fallback found {len(similar_dreams)} dreams")
 
         # Format response
         dream_summaries = [
