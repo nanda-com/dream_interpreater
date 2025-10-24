@@ -46,18 +46,21 @@ class DreamEmbeddingService:
         self,
         title: Optional[str],
         description: str,
-        interpretation: Optional[str]
+        interpretation: Optional[str],
+        emotion_tags: Optional[str] = None
     ) -> str:
         """
         Prepare comprehensive text from dream components for embedding.
 
-        Weights description 3x higher than other components by repeating it,
+        Weights description 6x higher than other components by repeating it,
         ensuring that semantic search matches dream content more accurately.
+        Also includes emotion tags for emotion-based queries.
 
         Args:
             title: Dream title
             description: Dream description
             interpretation: Dream interpretation
+            emotion_tags: Comma-separated emotion tags
 
         Returns:
             Combined text for embedding with weighted description
@@ -74,6 +77,17 @@ class DreamEmbeddingService:
             parts.append(f"{description}")
             parts.append(f"{description}")
             parts.append(f"{description}")
+
+        # Add emotion tags 6 times for emotion-based queries (same weight as description)
+        # This helps queries like "What emotions appear most in my dreams?"
+        if emotion_tags:
+            emotion_text = f"Emotions: {emotion_tags}"
+            parts.append(emotion_text)
+            parts.append(emotion_text)
+            parts.append(emotion_text)
+            parts.append(emotion_text)
+            parts.append(emotion_text)
+            parts.append(emotion_text)
 
         if title:
             parts.append(f"Title: {title}")
@@ -158,11 +172,12 @@ class DreamEmbeddingService:
         Returns:
             The created DreamVector object
         """
-        # Prepare text from dream components
+        # Prepare text from dream components including emotion tags
         text = self.prepare_dream_text(
             title=dream_entry.title,
             description=dream_entry.description,
-            interpretation=dream_entry.interpretation
+            interpretation=dream_entry.interpretation,
+            emotion_tags=dream_entry.emotion_tags
         )
 
         # Store the embedding

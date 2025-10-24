@@ -164,14 +164,39 @@ Interpretation: {dream.interpretation or 'No interpretation'}
         logger.info(f"Processing question for user {user_id}: {question[:50]}...")
 
         try:
-            # Retrieve relevant dreams
-            with ErrorContext("retrieve relevant dreams"):
-                similar_dreams = await self.retrieval_service.search_similar_dreams(
-                    db=db,
-                    user_id=user_id,
-                    query=question,
-                    top_k=top_k
-                )
+            # Check if this is a meta-question that needs all dreams
+            meta_keywords = [
+                'what emotions', 'which emotions', 'emotions appear', 'common emotions',
+                'recurring', 'patterns', 'themes', 'most common', 'frequently',
+                'usually', 'often', 'typically', 'what are my', 'tell me about my'
+            ]
+
+            is_meta_question = any(keyword in question.lower() for keyword in meta_keywords)
+
+            if is_meta_question:
+                # For meta-questions, retrieve ALL recent dreams (or more dreams)
+                logger.info(f"Detected meta-question, retrieving all recent dreams")
+                with ErrorContext("retrieve all recent dreams"):
+                    # Get all dreams for the user, ordered by recency
+                    from sqlalchemy import select
+                    result = await db.execute(
+                        select(DreamEntry)
+                        .where(DreamEntry.user_id == user_id)
+                        .order_by(DreamEntry.timestamp.desc())
+                        .limit(top_k or 20)  # Get more dreams for pattern analysis
+                    )
+                    dreams = result.scalars().all()
+                    # Convert to same format as semantic search (dream, score)
+                    similar_dreams = [(dream, 1.0) for dream in dreams]
+            else:
+                # For specific questions, use semantic search
+                with ErrorContext("retrieve relevant dreams"):
+                    similar_dreams = await self.retrieval_service.search_similar_dreams(
+                        db=db,
+                        user_id=user_id,
+                        query=question,
+                        top_k=top_k
+                    )
 
             # Format context
             context = self.format_dream_context(similar_dreams)

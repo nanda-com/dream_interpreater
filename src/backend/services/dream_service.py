@@ -28,11 +28,14 @@ class DreamService:
     ) -> DreamEntry:
    
         # Get AI interpretation
-        # The updated interpret_dream method returns a tuple (interpretation, title)
-        interpretation, ai_title = self.ai_interpreter.interpret_dream(description, title)
-        
+        # The updated interpret_dream method returns a tuple (interpretation, title, emotions)
+        interpretation, ai_title, ai_emotions = self.ai_interpreter.interpret_dream(description, title)
+
         # Use provided title if available, otherwise use AI-generated title
         final_title = title or ai_title
+
+        # Use provided emotions if available, otherwise use AI-extracted emotions
+        final_emotions = emotions if emotions else ai_emotions
         
         # If still no title, generate one as fallback
         if not final_title:
@@ -48,7 +51,7 @@ class DreamService:
             title=final_title,
             description=description,
             interpretation=interpretation,
-            emotion_tags=",".join(emotions) if emotions else None,
+            emotion_tags=",".join(final_emotions) if final_emotions else None,
             timestamp=timestamp or datetime.utcnow()
         )
 
@@ -155,11 +158,14 @@ class DreamService:
         # If description changed, re-interpret the dream
         if description is not None and description != dream.description:
             dream.description = description
-            new_interpretation, new_title = self.ai_interpreter.interpret_dream(description, title)
+            new_interpretation, new_title, new_emotions = self.ai_interpreter.interpret_dream(description, title)
             dream.interpretation = new_interpretation
             # Only update title if not explicitly provided
             if title is None:
                 dream.title = new_title[:35] if new_title else dream.title
+            # Only update emotions if not explicitly provided
+            if emotions is None and new_emotions:
+                dream.emotion_tags = ",".join(new_emotions)
             
         # Update emotions if provided
         if emotions is not None:

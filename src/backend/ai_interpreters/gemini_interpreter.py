@@ -33,20 +33,22 @@ class GeminiDreamInterpreter:
         self.model = genai.GenerativeModel(llm_modelname)
         self.rag_service = DreamRAGService()
 
-    def interpret_dream(self, description: str, title: Optional[str] = None) -> tuple[str, str]:
+    def interpret_dream(self, description: str, title: Optional[str] = None) -> tuple[str, str, list[str]]:
         try:
             # Define JSON schema based on whether a title is needed
             if title is None:
                 json_schema = """
 {{
     "title": "A catchy, creative, meaningful title with exactly TWO words that captures the essence of the dream.",
-    "interpretation": "A creative and entertaining interpretation of the dream that identifies key symbols and offers positive insights or reflections. Keep the tone light and enjoyable while addressing the main elements of the dream. Strictly make it TWO paragraphs long. Do not use special characters other than single quotes, commas, periods, hyphens, question marks, and exclamation marks. Strictly avoid double quotes, and slashes."
+    "interpretation": "A creative and entertaining interpretation of the dream that identifies key symbols and offers positive insights or reflections. Keep the tone light and enjoyable while addressing the main elements of the dream. Strictly make it TWO paragraphs long. Do not use special characters other than single quotes, commas, periods, hyphens, question marks, and exclamation marks. Strictly avoid double quotes, and slashes.",
+    "emotions": ["List of 2-4 primary emotions experienced in the dream. Use simple, common emotion words like: anxious, happy, scared, peaceful, confused, excited, sad, angry, curious, relieved, joyful, fearful, frustrated, content, etc."]
 }}
 """
             else:
                 json_schema = """
 {{
-    "interpretation": "A creative and entertaining interpretation of the dream that identifies key symbols and offers positive insights or reflections. Keep the tone light and enjoyable while addressing the main elements of the dream. Strictly make it two paragraphs long. Do not use special characters other than single quotes, commas, periods, hyphens, question marks, and exclamation marks. Strictly avoid double quotes, and slashes."
+    "interpretation": "A creative and entertaining interpretation of the dream that identifies key symbols and offers positive insights or reflections. Keep the tone light and enjoyable while addressing the main elements of the dream. Strictly make it two paragraphs long. Do not use special characters other than single quotes, commas, periods, hyphens, question marks, and exclamation marks. Strictly avoid double quotes, and slashes.",
+    "emotions": ["List of 2-4 primary emotions experienced in the dream. Use simple, common emotion words like: anxious, happy, scared, peaceful, confused, excited, sad, angry, curious, relieved, joyful, fearful, frustrated, content, etc."]
 }}
 """
             
@@ -80,57 +82,98 @@ Dream description: {description}
             response_text = response.text.strip()
             print(response_text)
             response_json = None
-            # Try to extract JSON from the response text
-            json_match = re.search(r'```json\s*({[\s\S]*?})\s*```', response_text, re.DOTALL)
-            if not json_match:
-                json_match = re.search(r'{[\s\S]*}', response_text)
+
+            # Strip markdown code blocks if present
+            cleaned_text = response_text
+            if '```json' in cleaned_text:
+                cleaned_text = re.sub(r'```json\s*', '', cleaned_text)
+                cleaned_text = re.sub(r'\s*```', '', cleaned_text)
+            elif '```' in cleaned_text:
+                cleaned_text = re.sub(r'```\s*', '', cleaned_text)
+
+            # Try to extract JSON from the cleaned text
+            json_match = re.search(r'{[\s\S]*}', cleaned_text, re.DOTALL)
 
             if json_match:
-                json_str = json_match.group(1) if '```json' in json_match.group(0) else json_match.group(0)
+                json_str = json_match.group(0)
                 try:
                     response_json = json.loads(json_str)
                 except json.JSONDecodeError:
                     try:
-                        # Fix common JSON errors like single quotes
-                        fixed_json_str = re.sub(r"'([^']+)':", r'"\1":', json_str)
+                        # Fix common JSON errors
+                        # 1. Replace unescaped newlines within string values
+                        fixed_json_str = re.sub(r':\s*"([^"]*?)\n([^"]*?)"', lambda m: f': "{m.group(1)}\\n{m.group(2)}"', json_str)
+                        # 2. Fix single quotes to double quotes
+                        fixed_json_str = re.sub(r"'([^']+)':", r'"\1":', fixed_json_str)
                         fixed_json_str = re.sub(r":\s*'([^']*)'", r': "\1"', fixed_json_str)
                         response_json = json.loads(fixed_json_str)
                     except json.JSONDecodeError:
                         try:
-                            import ast
-                            response_json = ast.literal_eval(json_str)
-                        except (SyntaxError, ValueError):
-                            response_json = None # Failed to parse
+                            # Use a more aggressive fix for newlines
+                            # Find all string values and escape their newlines
+                            def fix_newlines(match):
+                                value = match.group(1)
+                                # Escape newlines in the value
+                                return f'"{value.replace(chr(10), " ")}"'
+
+                            fixed_json_str = re.sub(r'"([^"]*)"', fix_newlines, json_str, flags=re.DOTALL)
+                            response_json = json.loads(fixed_json_str)
+                        except json.JSONDecodeError:
+                            try:
+                                import ast
+                                response_json = ast.literal_eval(json_str)
+                            except (SyntaxError, ValueError):
+                                response_json = None # Failed to parse
 
             final_title = title
             interpretation = "Could not parse dream interpretation."
-            
+            emotions = []
+
             if response_json:
                 interpretation = response_json.get("interpretation", interpretation)
                 if final_title is None:
                     final_title = response_json.get("title", "Dream Entry")
+
+                # Extract emotions from JSON
+                emotions_raw = response_json.get("emotions", [])
+                if isinstance(emotions_raw, list):
+                    # Filter and clean emotion tags
+                    emotions = [e.strip().lower() for e in emotions_raw if isinstance(e, str)]
+                    emotions = [e for e in emotions if 3 <= len(e) <= 15 and e.replace(' ', '').isalpha()]
+                    emotions = emotions[:4]  # Limit to 4 emotions
             else:
                 # Fallback to regex if JSON parsing fails
                 print(f"Failed to parse JSON, falling back to regex. Response was: {response_text}")
                 if final_title is None:
-                    title_match = re.search(r'["\']title["\']\s*:\s*["\'](.*?)["\']', response_text, re.DOTALL | re.IGNORECASE)
+                    title_match = re.search(r'["\']title["\']\s*:\s*["\'](.*?)["\']', cleaned_text, re.DOTALL | re.IGNORECASE)
                     final_title = title_match.group(1).strip() if title_match else "Dream Entry"
 
-                interp_match = re.search(r'["\']interpretation["\']\s*:\s*["\'](.*?)["\']', response_text, re.DOTALL | re.IGNORECASE)
+                interp_match = re.search(r'["\']interpretation["\']\s*:\s*["\'](.*?)["\']', cleaned_text, re.DOTALL | re.IGNORECASE)
                 if interp_match:
                     interpretation = interp_match.group(1).strip()
                 else:
                     interpretation = response_text
-            
+
+                # Extract emotions array from regex
+                emotions_match = re.search(r'["\']emotions["\']\s*:\s*\[(.*?)\]', cleaned_text, re.DOTALL | re.IGNORECASE)
+                if emotions_match:
+                    emotions_str = emotions_match.group(1)
+                    # Extract emotion strings from array
+                    emotion_items = re.findall(r'["\']([^"\']+)["\']', emotions_str)
+                    emotions = [e.strip().lower() for e in emotion_items if e.strip()]
+                    emotions = [e for e in emotions if 3 <= len(e) <= 15 and e.replace(' ', '').isalpha()]
+                    emotions = emotions[:4]
+
             final_title = final_title or "Dream Entry"
 
             print("title: " + (final_title if final_title else "None"))
             print("interpretation: " + interpretation)
-            return interpretation, final_title
+            print("emotions: " + str(emotions))
+            return interpretation, final_title, emotions
 
         except Exception as e:
             print(f"An unexpected error occurred in dream interpretation: {e}")
-            return f"An error occurred during interpretation: {str(e)}", title or "Dream"
+            return f"An error occurred during interpretation: {str(e)}", title or "Dream", []
 
     def generate_dream_title(self, description: str) -> Optional[str]:
         """
