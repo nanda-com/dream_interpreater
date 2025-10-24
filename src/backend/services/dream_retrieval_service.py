@@ -52,8 +52,9 @@ class DreamRetrievalService:
         """
         try:
             # Use defaults if not provided
+            # Note: Use 'is None' check to allow 0.0 as a valid threshold
             top_k = top_k or self.default_top_k
-            min_similarity = min_similarity or self.default_threshold
+            min_similarity = self.default_threshold if min_similarity is None else min_similarity
 
             # Generate embedding for the query
             query_embedding = self.embedding_service.generate_embedding(query)
@@ -146,8 +147,9 @@ class DreamRetrievalService:
                 return []
 
             # Use defaults if not provided
+            # Note: Use 'is None' check to allow 0.0 as a valid threshold
             top_k = top_k or self.default_top_k
-            min_similarity = min_similarity or self.default_threshold
+            min_similarity = self.default_threshold if min_similarity is None else min_similarity
 
             # Find similar dreams (excluding the reference dream itself)
             query_stmt = (

@@ -51,15 +51,29 @@ class DreamEmbeddingService:
         """
         Prepare comprehensive text from dream components for embedding.
 
+        Weights description 3x higher than other components by repeating it,
+        ensuring that semantic search matches dream content more accurately.
+
         Args:
             title: Dream title
             description: Dream description
             interpretation: Dream interpretation
 
         Returns:
-            Combined text for embedding
+            Combined text for embedding with weighted description
         """
         parts = []
+
+        # Add description 6 times at the beginning for higher weight
+        # This ensures short descriptions like "i saw rat" aren't diluted
+        # by long AI-generated interpretations
+        if description:
+            parts.append(f"{description}")
+            parts.append(f"{description}")
+            parts.append(f"{description}")
+            parts.append(f"{description}")
+            parts.append(f"{description}")
+            parts.append(f"{description}")
 
         if title:
             parts.append(f"Title: {title}")
@@ -67,8 +81,11 @@ class DreamEmbeddingService:
         if description:
             parts.append(f"Description: {description}")
 
+        # Only include a short excerpt of interpretation to avoid dilution
+        # Limit to first 100 characters
         if interpretation:
-            parts.append(f"Interpretation: {interpretation}")
+            interpretation_excerpt = interpretation[:100] if len(interpretation) > 100 else interpretation
+            parts.append(f"Interpretation: {interpretation_excerpt}")
 
         return " ".join(parts)
 
