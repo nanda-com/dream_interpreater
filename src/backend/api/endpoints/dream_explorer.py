@@ -107,8 +107,8 @@ async def ask_question(
 )
 @limiter.limit(get_rate_limit("dream_explorer_search"))
 async def search_similar_dreams(
-    req: Request,
-    request: SimilarDreamsRequest,
+    request: Request,
+    search_request: SimilarDreamsRequest,
     db: AsyncSession = Depends(get_db),
     token: str = Depends(oauth2_scheme)
 ) -> SimilarDreamsResponse:
@@ -128,7 +128,7 @@ async def search_similar_dreams(
     payload = verify_token(token)
     user_id = int(payload.get("sub"))
 
-    if not request.query:
+    if not search_request.query:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Query is required for search"
@@ -144,11 +144,11 @@ async def search_similar_dreams(
         similar_dreams = await retrieval_service.search_similar_dreams(
             db=db,
             user_id=user_id,
-            query=request.query,
-            top_k=request.top_k,
-            start_date=request.start_date,
-            end_date=request.end_date,
-            emotion_tags=request.emotion_tags
+            query=search_request.query,
+            top_k=search_request.top_k,
+            start_date=search_request.start_date,
+            end_date=search_request.end_date,
+            emotion_tags=search_request.emotion_tags
         )
 
         # Format response
@@ -260,8 +260,8 @@ async def find_similar_to_dream(
 )
 @limiter.limit(get_rate_limit("dream_explorer_patterns"))
 async def find_patterns(
-    req: Request,
-    request: PatternSearchRequest,
+    request: Request,
+    pattern_request: PatternSearchRequest,
     db: AsyncSession = Depends(get_db),
     token: str = Depends(oauth2_scheme)
 ) -> PatternSearchResponse:
@@ -294,8 +294,8 @@ async def find_patterns(
         result = await explorer_service.find_patterns(
             db=db,
             user_id=user_id,
-            pattern_query=request.pattern_query,
-            top_k=request.top_k
+            pattern_query=pattern_request.pattern_query,
+            top_k=pattern_request.top_k
         )
 
         return PatternSearchResponse(**result)
@@ -322,8 +322,8 @@ async def find_patterns(
 )
 @limiter.limit(get_rate_limit("dream_explorer_compare"))
 async def compare_dreams(
-    req: Request,
-    request: CompareDreamsRequest,
+    request: Request,
+    compare_request: CompareDreamsRequest,
     db: AsyncSession = Depends(get_db),
     token: str = Depends(oauth2_scheme)
 ) -> CompareDreamsResponse:
@@ -345,7 +345,7 @@ async def compare_dreams(
 
     try:
         logger.info(
-            f"Comparing dreams {request.dream_id_1} and {request.dream_id_2} "
+            f"Comparing dreams {compare_request.dream_id_1} and {compare_request.dream_id_2} "
             f"for user {user_id}"
         )
 
@@ -355,8 +355,8 @@ async def compare_dreams(
         # Compare dreams
         comparison = await explorer_service.compare_dreams(
             db=db,
-            dream_id_1=request.dream_id_1,
-            dream_id_2=request.dream_id_2,
+            dream_id_1=compare_request.dream_id_1,
+            dream_id_2=compare_request.dream_id_2,
             user_id=user_id
         )
 

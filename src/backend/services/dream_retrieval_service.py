@@ -97,7 +97,7 @@ class DreamRetrievalService:
             # similarity = 1 - distance
             results = []
             for dream, distance in rows:
-                similarity = 1 - distance
+                similarity = float(1 - distance)
                 if similarity >= min_similarity:
                     results.append((dream, similarity))
 
@@ -141,7 +141,7 @@ class DreamRetrievalService:
             )
             reference_embedding = result.scalar_one_or_none()
 
-            if not reference_embedding:
+            if reference_embedding is None:
                 logger.warning(f"No embedding found for dream_id: {dream_id}")
                 return []
 
@@ -173,7 +173,7 @@ class DreamRetrievalService:
             # Convert distance to similarity and filter by threshold
             results = []
             for dream, distance in rows:
-                similarity = 1 - distance
+                similarity = float(1 - distance)
                 if similarity >= min_similarity:
                     results.append((dream, similarity))
 
