@@ -8,7 +8,7 @@ from sqlalchemy.future import select
 from src.backend.models.schemas import UserCreate, UserLogin, Token, UserResponse, GuestToRegularConversion, GoogleAuthRequest, GoogleUserInfo, UserUpdateRequest
 from src.backend.utils.auth import hash_password, create_jwt_token, verify_password, verify_token
 from src.backend.utils.oauth.google import verify_google_token
-from src.backend.models import User, DreamEntry, Feedback, ReportedDream
+from src.backend.models import User, DreamEntry, Feedback, ReportedDream, DreamVector
 import uuid
 import random
 import string
@@ -288,7 +288,7 @@ async def login_with_google(google_data: GoogleAuthRequest, db: AsyncSession = D
 @user_router.delete("/me", response_model=dict)
 async def delete_user_account(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     """
-    Delete the current user and all their associated data (dreams, feedback, and dream reports).
+    Delete the current user and all their associated data (dreams, dream vectors, feedback, and dream reports).
     This is particularly useful for cleaning up guest accounts on logout.
     """
     user_id = current_user.id
@@ -305,7 +305,12 @@ async def delete_user_account(current_user: User = Depends(get_current_user), db
             await db.execute(
                 delete(ReportedDream).where(ReportedDream.dream_id.in_(dream_ids))
             )
-        
+
+        # Delete all dream vectors for this user
+        await db.execute(
+            delete(DreamVector).where(DreamVector.user_id == user_id)
+        )
+
         # Delete all the user's dream entries
         await db.execute(
             delete(DreamEntry).where(DreamEntry.user_id == user_id)
@@ -328,7 +333,7 @@ async def delete_user_account(current_user: User = Depends(get_current_user), db
 @user_router.delete("/guest/logout", response_model=dict)
 async def delete_guest_on_logout(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     """
-    Delete a guest user account and all associated data on logout.
+    Delete a guest user account and all associated data (dreams, dream vectors, feedback, and dream reports) on logout.
     This endpoint will only work for users with isGuest=True.
     """
     if not current_user.isGuest:
@@ -351,7 +356,12 @@ async def delete_guest_on_logout(current_user: User = Depends(get_current_user),
             await db.execute(
                 delete(ReportedDream).where(ReportedDream.dream_id.in_(dream_ids))
             )
-        
+
+        # Delete all dream vectors for this user
+        await db.execute(
+            delete(DreamVector).where(DreamVector.user_id == user_id)
+        )
+
         # Delete all the user's dream entries
         await db.execute(
             delete(DreamEntry).where(DreamEntry.user_id == user_id)
