@@ -1,14 +1,12 @@
-# Dream Journal AI
+# Dream Journal AI 🌙✨
 
-## Quick Links
+An AI-powered dream journal that helps you record, analyze, and explore your dreams with advanced natural language processing and semantic search.
 
-- 🌐 [Website](https://dreamidiary.com)
-- 📱 [Google Playstore Link](https://play.google.com/store/apps/details?id=com.tinystars.dreamidiary)
-- 💻 [Frontend Repository](https://github.com/Syamgith/ai-dream-journal-frontend)
+## 🌐 Quick Links
 
-### Screenshots
-
-#### Mobile App
+- [Website](https://dreamidiary.com)
+- [Google Playstore](https://play.google.com/store/apps/details?id=com.tinystars.dreamidiary)
+- [Frontend Repository](https://github.com/Syamgith/ai-dream-journal-frontend)
 
 <p align="center">
   <img src="pics/ss1.jpg" alt="Login" width="250"/>
@@ -16,184 +14,255 @@
   <img src="pics/ss2.jpg" alt="Add Dream" width="250"/>
 </p>
 
-## Overview
+## 🎯 Overview
 
-Dream Journal AI is an advanced application that leverages artificial intelligence to help users record, analyze, and interpret their dreams. Using Google's Gemini AI model and modern web technologies, it provides intelligent dream interpretation and a seamless user experience.
+Dream Journal AI combines cutting-edge AI technology with psychological dream analysis to help users record, interpret, and explore their dreams. Using Google's Gemini AI, vector embeddings, and Retrieval-Augmented Generation (RAG), it provides personalized dream insights and pattern discovery.
 
-## Features
+## ✨ Key Features
 
-- 📝 Dream entry creation and management
-- 🤖 AI-powered dream interpretation using Google Gemini
-- 🔐 Secure user authentication
-- 📱 RESTful API architecture
-- 📚 Knowledge base integration for enhanced interpretations
+### 🤖 AI-Powered Interpretation
 
-## Technology Stack
+- **Smart Dream Analysis**: Google Gemini AI generates personalized dream interpretations
+- **RAG Enhancement**: Context-aware responses using knowledge base with dream symbolism
+- **Auto-Title Generation**: AI creates meaningful titles for your dreams
+
+### 🔍 Dream Explorer
+
+- **Conversational Interface**: Chat with your dream history using natural language
+- **Semantic Search**: Find dreams by meaning, not just keywords (pgvector + sentence transformers)
+- **Pattern Analysis**: Discover recurring themes, symbols, and emotions
+- **Dream Comparison**: Compare two dreams to find connections and insights
+- **Smart Fallback**: 3-level search (semantic → keyword → text) ensures results
+
+### 🔐 Security & Authentication
+
+- JWT-based authentication
+- Google OAuth integration
+- Secure password hashing with bcrypt
+
+## 🛠 Technology Stack
 
 ### Backend
 
-- **Framework**: FastAPI
-- **Server**: Uvicorn
-- **Database**: PostgreSQL with SQLAlchemy ORM
-- **Authentication**: JWT with OAuth2
-- **AI Integration**: Google Gemini, LangChain
-- **Vector Database**: FAISS for similarity search
+- **Framework**: FastAPI (async/await)
+- **AI Models**: Google Gemini (gemini-2.5-flash-lite), LangChain
+- **Database**: PostgreSQL with AsyncSQLAlchemy ORM
+- **Vector Search**: pgvector extension
+- **Embeddings**: Sentence Transformers (all-MiniLM-L6-v2, 384-dim)
+- **Authentication**: JWT + OAuth2 (Google)
 
 ### Frontend
 
-- Modern web interface (details to be added)
+- React Native mobile app
+- Modern web interface
 
-## Architecture
+## 🏗 Architecture
 
-### Project Structure
+### RAG System Overview
 
 ```
-├── main.py                 # Application entry point
-├── server/                 # Server-side code
-│   ├── controllers/        # API controllers
-│   └── models/            # Data models
-├── app/                   # Frontend application
-├── tests/                 # Test files
-├── alembic/              # Database migrations
-├── types/                # Type definitions
-└── dream_knowledge_base/ # Knowledge base for dream interpretation
+┌─────────────────────────────────────────────────────────────────┐
+│                      Dream Journal AI - RAG Flow                │
+└─────────────────────────────────────────────────────────────────┘
+
+User Query ──► Embedding Model ──► Vector Search ──► Context ──► LLM
+                (all-MiniLM-L6)     (pgvector)     (dreams +    (Gemini)
+                                                   symbolism)     │
+                                                                   ▼
+                                                              AI Response
+
+┌─────────────────┐      ┌──────────────────┐      ┌─────────────┐
+│ User Dreams     │      │ PGVector         │      │ Google      │
+│ (PostgreSQL)    │◄────►│                  │─────►│ Gemini API  │
+└─────────────────┘      └──────────────────┘      └─────────────┘
 ```
 
 ### Database Schema
 
-The application uses PostgreSQL with the following main entities:
+```
+┌──────────────┐         ┌─────────────────┐
+│    Users     │         │   DreamEntry    │
+├──────────────┤         ├─────────────────┤
+│ id (PK)      │────┐    │ id (PK)         │
+│ email        │    │    │ user_id (FK)    │◄────┐
+│ username     │    └───►│ title           │     │
+│ password     │         │ description     │     │
+└──────────────┘         │ interpretation  │     │
+                         │ emotion_tags    │     │
+                         │ timestamp       │     │
+                         └─────────────────┘     │
+                                  │              │
+                                  │              │
+                         ┌────────▼────────┐     │
+                         │  DreamVector    │     │
+                         ├─────────────────┤     │
+                         │ id (PK)         │     │
+                         │ dream_id (FK)   │─────┘
+                         │ user_id (FK)    │
+                         │ embedding       │◄─── pgvector (384-dim)
+                         │ created_at      │
+                         └─────────────────┘
+```
 
-- Users
-- Dreams
-- Interpretations
-- Tags
-- Emotions
+### Project Structure
 
-## Prerequisites
+```
+src/backend/
+├── api/
+│   ├── endpoints/
+│   │   ├── dreams.py            # Dream CRUD operations
+│   │   ├── dream_explorer.py    # Conversational search
+│   │   └── users.py             # User management
+│   └── routes.py                # Router aggregation
+├── services/
+│   ├── dream_service.py         # Dream business logic
+│   ├── dream_rag_service.py
+│   ├── dream_explorer_service.py # Dream history exploration
+│   └── dream_retrieval_service.py # Vector search & embeddings
+├── models/
+│   ├── dreamentry.py            # Dream SQLAlchemy model
+│   ├── dream_vector.py          # Embedding storage model
+│   ├── user.py                  # User model
+│   └── schemas.py               # Pydantic validation schemas
+├── ai_interpreters/
+│   └── gemini_interpreter.py    # Google Gemini integration
+└── utils/
+    ├── auth.py                  # JWT authentication
+    └── config.py                # Settings management
+```
 
-- Python 3.10 or higher
-- PostgreSQL 12 or higher
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Python 3.10+
+- PostgreSQL 12+ (with pgvector extension)
 - Google Gemini API Key
-- Docker (optional, for containerized deployment)
 
-## Installation
-
-### Local Development Setup
-
-1. Clone the repository:
+### Installation
 
 ```bash
+# Clone and setup
 git clone https://github.com/Syamgith/ai-dream-journal.git
 cd ai-dream-journal
-```
-
-2. Create and activate a virtual environment:
-
-```bash
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-
-3. Install dependencies:
-
-```bash
+source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
-```
 
-4. Set up environment variables:
-   Create a `.env` file in the root directory with the following variables:
-
-```env
-DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/dream_journal
+# Configure environment (.env file)
+PostgreSQL_URL=postgresql+asyncpg://user:password@localhost:5432/dream_journal
 GOOGLE_API_KEY=your_gemini_api_key
-SECRET_KEY=your_jwt_secret_key
-```
+JWT_SECRET=your_jwt_secret
+LLM_MODEL_NAME=gemini-2.5-flash-lite
 
-5. Initialize the database:
-
-```bash
+# Initialize database
 alembic upgrade head
-```
 
-6. Run the application:
-
-```bash
+# Run server
 uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 ### Docker Deployment
 
-1. Build and run using Docker Compose:
-
 ```bash
 docker-compose up --build
 ```
 
-## API Documentation
+## 📡 API Documentation
 
-Once the application is running, you can access the API documentation at:
+**Interactive Docs**:
 
 - Swagger UI: `http://localhost:8000/docs`
 - ReDoc: `http://localhost:8000/redoc`
 
-### Example API Usage
+### Core Endpoints
 
-1. Create a new dream entry:
+#### Dreams Management
+
+- `POST /dreams/` - Create dream with AI interpretation
+- `GET /dreams/` - List user's dreams
+- `GET /dreams/{id}` - Get specific dream
+- `PUT /dreams/{id}` - Update dream
+- `DELETE /dreams/{id}` - Delete dream
+
+#### Dream Explorer 🔍
+
+- `POST /dream-explorer/ask` - Chat with your dream history
+
+  ```json
+  {
+    "question": "What do my flying dreams mean?",
+    "chat_history": [],
+    "top_k": 5
+  }
+  ```
+
+- `POST /dream-explorer/search` - Semantic search across dreams
+
+  ```json
+  {
+    "query": "dreams about water and oceans",
+    "top_k": 5,
+    "emotion_tags": ["calm"]
+  }
+  ```
+
+- `GET /dream-explorer/similar/{dream_id}` - Find similar dreams
+
+- `POST /dream-explorer/patterns` - Discover recurring patterns
+
+  ```json
+  {
+    "pattern_query": "recurring nightmares",
+    "top_k": 10
+  }
+  ```
+
+- `POST /dream-explorer/compare` - Compare two dreams
+  ```json
+  {
+    "dream_id_1": 123,
+    "dream_id_2": 456
+  }
+  ```
+
+#### Authentication
+
+- `POST /token` - Login (JWT)
+- `POST /users/register` - Register new user
+- `POST /auth/google` - Google OAuth
+
+## 🧪 Testing
 
 ```bash
-curl -X POST "http://localhost:8000/dreams/" \
- -H "accept: application/json" \
- -H "Authorization: Bearer YOUR_JWT_TOKEN" \
- -H "Content-Type: application/json" \
- -d '{
-   "title": "Flying Apple",
-   "description": "I saw an apple flying while I was walking in the park.",
-   "date": "2024-03-16T08:57:23.323Z",
-   "emotions": ["amazed", "curious"],
-   "tags": ["flying", "fruit", "park"]
-}'
-```
-
-2. Retrieve dreams:
-
-```bash
-curl -X GET "http://localhost:8000/dreams/" \
- -H "accept: application/json" \
- -H "Authorization: Bearer YOUR_JWT_TOKEN"
-```
-
-## Testing
-
-Run the test suite:
-
-```bash
+# Run all tests
 pytest
+
+# Run specific test suites
+pytest tests/test_dream_explorer_endpoints.py
+pytest tests/test_dream_service.py
 ```
 
-## Contributing
+## 🎨 How It Works
 
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+1. **Dream Entry**: User creates a dream → AI generates interpretation using Gemini
+2. **Embedding Creation**: Dream description → Sentence Transformer → 384-dim vector → Stored in pgvector
+3. **Semantic Search**: Query → Embedded → Similarity search in pgvector → Ranked results
+4. **Dream Explorer**: Question → Retrieves relevant dreams → LangChain + Gemini → Conversational response
+5. **Fallback Search**: Semantic → Keyword matching → Text pattern search (ensures results)
 
-## Security
+## 🤝 Contributing
 
-- JWT-based authentication
-- Password hashing with bcrypt
-- CORS protection
-- Environment variable configuration
-- Input validation with Pydantic
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-## License
+## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License - see [LICENSE](LICENSE) for details
 
-## Acknowledgments
+## 🙏 Acknowledgments
 
-- Google Gemini AI
-- FastAPI
-- SQLAlchemy
-- LangChain
-- All other open-source contributors
+Built with: **Google Gemini AI** • **FastAPI** • **LangChain** • **pgvector** • **Sentence Transformers**
+
+---
+
+<p align="center">Made with ❤️ for dreamers everywhere</p>
