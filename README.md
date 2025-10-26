@@ -16,14 +16,13 @@ An AI-powered dream journal that helps you record, analyze, and explore your dre
 
 ## 🎯 Overview
 
-Dream Journal AI combines cutting-edge AI technology with psychological dream analysis to help users record, interpret, and explore their dreams. Using Google's Gemini AI, vector embeddings, and Retrieval-Augmented Generation (RAG), it provides personalized dream insights and pattern discovery.
+Dream Journal AI combines cutting-edge AI technology with psychological dream analysis to help users record, interpret, and explore their dreams. Using Google's Gemini AI and vector embeddings, it provides personalized dream insights and pattern discovery.
 
 ## ✨ Key Features
 
 ### 🤖 AI-Powered Interpretation
 
 - **Smart Dream Analysis**: Google Gemini AI generates personalized dream interpretations
-- **RAG Enhancement**: Context-aware responses using knowledge base with dream symbolism
 - **Auto-Title Generation**: AI creates meaningful titles for your dreams
 
 ### 🔍 Dream Explorer
@@ -66,8 +65,8 @@ Dream Journal AI combines cutting-edge AI technology with psychological dream an
 └─────────────────────────────────────────────────────────────────┘
 
 User Query ──► Embedding Model ──► Vector Search ──► Context ──► LLM
-                (all-MiniLM-L6)     (pgvector)     (dreams +    (Gemini)
-                                                   symbolism)     │
+                (all-MiniLM-L6)     (pgvector)      (dreams)     (Gemini)
+                                                                   │
                                                                    ▼
                                                               AI Response
 
@@ -116,7 +115,6 @@ src/backend/
 │   └── routes.py                # Router aggregation
 ├── services/
 │   ├── dream_service.py         # Dream business logic
-│   ├── dream_rag_service.py
 │   ├── dream_explorer_service.py # Dream history exploration
 │   └── dream_retrieval_service.py # Vector search & embeddings
 ├── models/
