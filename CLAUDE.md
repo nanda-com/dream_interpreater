@@ -6,7 +6,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Dream Journal AI is a FastAPI backend application that uses Google Gemini AI to interpret dreams. It features:
 - AI-powered dream interpretation using Google Gemini (currently using gemini-2.5-flash-lite)
-- RAG (Retrieval-Augmented Generation) with FAISS vector database for enhanced interpretations
 - PostgreSQL database with async SQLAlchemy ORM
 - JWT authentication with OAuth2 (including Google OAuth)
 - RESTful API architecture
@@ -65,7 +64,6 @@ src/backend/
 │   └── schemas.py      # Pydantic validation schemas
 ├── services/           # Business logic layer
 │   ├── dream_service.py      # Dream creation and management
-│   ├── dream_rag_service.py  # RAG system for dream interpretation
 │   └── feedback_service.py
 ├── ai_interpreters/    # AI integration modules
 │   ├── gemini_interpreter.py   # Primary interpreter (Google Gemini)
@@ -77,18 +75,13 @@ src/backend/
 │   └── oauth/
 │       └── google.py   # Google OAuth integration
 └── databases.py        # Database engine and session management
-
-dream_knowledge_base/   # FAISS vector store for dream symbolism
-├── index.faiss         # FAISS index
-├── index.pkl           # Pickled metadata
-└── symbolism.txt       # Dream symbol knowledge base
 ```
 
 ### Request Flow
 1. **API Request** → `main.py` (FastAPI app) → `src/backend/api/routes.py`
 2. **Routing** → Specific endpoint in `src/backend/api/endpoints/`
 3. **Business Logic** → Service layer in `src/backend/services/`
-4. **AI Processing** → `GeminiDreamInterpreter` (with RAG enhancement via `DreamRAGService`)
+4. **AI Processing** → `GeminiDreamInterpreter`
 5. **Database** → Async SQLAlchemy session via `get_db()` dependency
 6. **Response** → Pydantic schema validation → JSON response
 
@@ -96,7 +89,6 @@ dream_knowledge_base/   # FAISS vector store for dream symbolism
 
 #### AI Interpretation Pipeline
 - **Primary**: `GeminiDreamInterpreter` uses Google Gemini API with configurable model name
-- **Enhancement**: `DreamRAGService` retrieves relevant symbolism from FAISS vector database
 - **Model Selection**: Set via `LLM_MODEL_NAME` env var (defaults to 'gemini-2.5-flash-lite')
 - The interpreter returns both title and interpretation as a tuple
 - Strict output formatting to avoid special characters (no double quotes, slashes)
@@ -156,10 +148,8 @@ When running, access interactive docs:
 
 1. **Dream Creation Flow**: When creating a dream, if no title is provided, the AI generates one. Titles are limited to 35 characters.
 
-2. **RAG Integration**: The `GeminiDreamInterpreter` automatically uses `DreamRAGService` to enhance interpretations with relevant symbolism from the knowledge base.
+2. **Error Handling**: Database errors are caught and mapped to appropriate HTTP exceptions in `databases.py:get_db()`
 
-3. **Error Handling**: Database errors are caught and mapped to appropriate HTTP exceptions in `databases.py:get_db()`
+3. **CORS**: Currently configured for `allow_origins=["*"]` in development (main.py:26)
 
-4. **CORS**: Currently configured for `allow_origins=["*"]` in development (main.py:26)
-
-5. **Model Configuration**: Settings use Pydantic v2 with `model_config` and `SettingsConfigDict` (not the old `Config` class)
+4. **Model Configuration**: Settings use Pydantic v2 with `model_config` and `SettingsConfigDict` (not the old `Config` class)

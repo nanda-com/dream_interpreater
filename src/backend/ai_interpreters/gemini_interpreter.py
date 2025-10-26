@@ -6,7 +6,6 @@ import google.generativeai as genai
 from typing import Optional
 import json
 import re
-from src.backend.services.dream_rag_service import DreamRAGService
 
 # Load environment variables from .env file
 load_dotenv()
@@ -31,7 +30,6 @@ class GeminiDreamInterpreter:
         
         # Initialize the model
         self.model = genai.GenerativeModel(llm_modelname)
-        self.rag_service = DreamRAGService()
 
     def interpret_dream(self, description: str, title: Optional[str] = None) -> tuple[str, str, list[str], list[str]]:
         try:
