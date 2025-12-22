@@ -154,12 +154,15 @@ Dream description: {description}
                 # Fallback to regex if JSON parsing fails
                 print(f"Failed to parse JSON, falling back to regex. Response was: {response_text}")
                 if final_title is None:
-                    title_match = re.search(r'["\']title["\']\s*:\s*["\'](.*?)["\']', cleaned_text, re.DOTALL | re.IGNORECASE)
-                    final_title = title_match.group(1).strip() if title_match else "Dream Entry"
+                    title_match = re.search(r'["\']title["\']\s*:\s*(?:"(.*?)"|\'(.*?)\')', cleaned_text, re.DOTALL | re.IGNORECASE)
+                    if title_match:
+                        final_title = (title_match.group(1) or title_match.group(2)).strip()
+                    else:
+                        final_title = "Dream Entry"
 
-                interp_match = re.search(r'["\']interpretation["\']\s*:\s*["\'](.*?)["\']', cleaned_text, re.DOTALL | re.IGNORECASE)
+                interp_match = re.search(r'["\']interpretation["\']\s*:\s*(?:"(.*?)"|\'(.*?)\')', cleaned_text, re.DOTALL | re.IGNORECASE)
                 if interp_match:
-                    interpretation = interp_match.group(1).strip()
+                    interpretation = (interp_match.group(1) or interp_match.group(2)).strip()
                 else:
                     interpretation = response_text
 
