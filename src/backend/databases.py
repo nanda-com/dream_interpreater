@@ -1,4 +1,4 @@
-from http.client import HTTPException
+from fastapi import HTTPException 
 import asyncpg
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
@@ -14,12 +14,22 @@ load_dotenv()
 # PostgreSQL Async Engine Configuration
 DATABASE_URL = os.getenv("PostgreSQL_URL")
 
+# Monkeypatch asyncpg to use unnamed prepared statements
+# This is required for transaction pooling with pgbouncer
+def _get_unique_id(self, prefix):
+    return ""
+
+asyncpg.connection.Connection._get_unique_id = _get_unique_id
+
 engine = create_async_engine(
     DATABASE_URL,
     pool_size=20,
     max_overflow=10,
     pool_timeout=30,
-    pool_pre_ping=True
+    pool_pre_ping=True,
+    connect_args={
+        "statement_cache_size": 0
+    }
 )
 
 # Session factory
