@@ -2,11 +2,6 @@
 
 An AI-powered dream journal that helps you record, analyze, and explore your dreams with advanced natural language processing and semantic search.
 
-## 🌐 Quick Links
-
-- [Website](https://dreamidiary.com)
-- [Google Playstore](https://play.google.com/store/apps/details?id=com.tinystars.dreamidiary)
-- [Frontend Repository](https://github.com/Syamgith/ai-dream-journal-frontend)
 
 <p align="center">
   <img src="pics/ss1.jpg" alt="Login" width="250"/>
