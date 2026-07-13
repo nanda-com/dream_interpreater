@@ -9,10 +9,13 @@ from sqlalchemy import select
 from src.backend.databases import get_db
 from src.backend.models.user import User
 
+from src.backend.utils.config import get_settings
+
 # Load environment variables
-SECRET_KEY = os.getenv("SECRET_KEY")
+settings = get_settings()
+SECRET_KEY = settings.JWT_SECRET
 if not SECRET_KEY:
-    raise ValueError("SECRET_KEY environment variable is not set")
+    raise ValueError("JWT_SECRET environment variable is not set")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 120  # Reduced to 15 minutes
 REFRESH_TOKEN_EXPIRE_DAYS = 30
