@@ -3,7 +3,7 @@ import asyncpg
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import declarative_base, sessionmaker
-from sqlalchemy import Column, Integer, String, Text, DateTime, inspect
+from sqlalchemy import Column, Integer, String, Text, DateTime, inspect, text
 from datetime import datetime
 import os
 from dotenv import load_dotenv
@@ -44,6 +44,8 @@ Base = declarative_base()
 # Create the tables
 async def create_tables():
     async with engine.begin() as conn:
+        # Enable pgvector extension
+        await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
         result = await conn.run_sync(lambda sync_conn: inspect(sync_conn).has_table('users'))
         if not result:
             await conn.run_sync(lambda sync_conn: Base.metadata.create_all(bind=sync_conn))

@@ -1,0 +1,1329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dream Journal AI — Explore Your Subconscious</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-color: #0b0816;
+            --card-bg: rgba(22, 17, 43, 0.6);
+            --border-color: rgba(147, 51, 234, 0.2);
+            --accent-purple: #9333ea;
+            --accent-pink: #db2777;
+            --accent-blue: #2563eb;
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --font-display: 'Outfit', sans-serif;
+            --font-body: 'Plus Jakarta Sans', sans-serif;
+            --neon-glow: 0 0 20px rgba(147, 51, 234, 0.4);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(147, 51, 234, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(37, 99, 235, 0.15) 0%, transparent 40%);
+            background-attachment: fixed;
+        }
+
+        /* App Containers */
+        #auth-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        #app-screen {
+            display: none;
+            min-height: 100vh;
+            flex-direction: column;
+        }
+
+        /* Glassmorphism Card Style */
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            transition: all 0.3s ease;
+        }
+
+        /* Authentication UI */
+        .auth-container {
+            width: 100%;
+            max-width: 450px;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .logo-title {
+            font-family: var(--font-display);
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #a78bfa 0%, #ec4899 50%, #3b82f6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-bottom: 30px;
+        }
+
+        .auth-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 25px;
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 12px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-family: var(--font-display);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .auth-tab.active {
+            color: var(--text-primary);
+            border-bottom: 2px solid var(--accent-purple);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px 12px 40px;
+            background: rgba(10, 10, 10, 0.4);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            font-size: 0.95rem;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .form-control:focus {
+            border-color: var(--accent-purple);
+            box-shadow: 0 0 10px rgba(147, 51, 234, 0.2);
+        }
+
+        .btn-gradient {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-family: var(--font-display);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-pink) 100%);
+            box-shadow: var(--neon-glow);
+            transition: all 0.3s ease;
+        }
+
+        .btn-gradient:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 25px rgba(147, 51, 234, 0.6);
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            margin: 20px 0;
+        }
+
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .divider:not(:empty)::before { margin-right: .5em; }
+        .divider:not(:empty)::after { margin-left: .5em; }
+
+        .btn-guest {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px dashed var(--border-color);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-family: var(--font-display);
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-guest:hover {
+            background: rgba(147, 51, 234, 0.1);
+            border-color: var(--accent-purple);
+        }
+
+        /* Navigation Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(11, 8, 22, 0.8);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-logo i {
+            font-size: 1.8rem;
+            color: var(--accent-purple);
+            text-shadow: var(--neon-glow);
+        }
+
+        .header-logo h1 {
+            font-family: var(--font-display);
+            font-size: 1.4rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #a78bfa 0%, #ec4899 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 15px;
+        }
+
+        .nav-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-family: var(--font-display);
+            font-size: 0.95rem;
+            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-btn.active, .nav-btn:hover {
+            color: var(--text-primary);
+            background: rgba(147, 51, 234, 0.15);
+            border: 1px solid rgba(147, 51, 234, 0.3);
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-info {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .user-info strong {
+            color: var(--text-primary);
+        }
+
+        .btn-logout {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: var(--font-display);
+            font-size: 0.85rem;
+            transition: all 0.3s;
+        }
+
+        .btn-logout:hover {
+            background: rgba(239, 68, 68, 0.25);
+        }
+
+        /* Main Workspace */
+        main {
+            flex: 1;
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .app-view {
+            display: none;
+        }
+
+        .app-view.active {
+            display: block;
+            animation: fadeIn 0.4s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Log Dream Tab styles */
+        .dream-editor-grid {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 900px) {
+            .dream-editor-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .dream-form {
+            padding: 30px;
+        }
+
+        .dream-form h2 {
+            font-family: var(--font-display);
+            margin-bottom: 25px;
+            font-size: 1.6rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .dream-form h2 i {
+            color: var(--accent-pink);
+        }
+
+        .emotion-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .emotion-tag {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .emotion-tag.selected {
+            background: var(--accent-purple);
+            border-color: var(--accent-purple);
+            box-shadow: 0 0 10px rgba(147, 51, 234, 0.4);
+        }
+
+        /* AI Result Section */
+        .ai-result-card {
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 350px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ai-result-placeholder {
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        .ai-result-placeholder i {
+            font-size: 3.5rem;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .loader-wrapper {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .cosmic-loader {
+            width: 60px;
+            height: 60px;
+            border: 3px solid transparent;
+            border-top: 3px solid var(--accent-purple);
+            border-bottom: 3px solid var(--accent-pink);
+            border-radius: 50%;
+            animation: spin 1.5s linear infinite;
+            position: relative;
+        }
+
+        .cosmic-loader::after {
+            content: '';
+            position: absolute;
+            top: 5px; left: 5px; right: 5px; bottom: 5px;
+            border: 3px solid transparent;
+            border-left: 3px solid var(--accent-blue);
+            border-radius: 50%;
+            animation: spin 3s linear infinite reverse;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .ai-interpretation-content {
+            display: none;
+        }
+
+        .ai-interpretation-content h3 {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: var(--text-primary);
+        }
+
+        .analysis-block {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.03);
+            border-left: 3px solid var(--accent-pink);
+            border-radius: 0 10px 10px 0;
+            line-height: 1.6;
+        }
+
+        .analysis-block h4 {
+            font-family: var(--font-display);
+            font-size: 0.95rem;
+            color: var(--accent-pink);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Dream List View */
+        .dream-list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .dream-list-header h2 {
+            font-family: var(--font-display);
+            font-size: 1.8rem;
+        }
+
+        .dreams-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .dream-card {
+            padding: 25px;
+            cursor: pointer;
+        }
+
+        .dream-card:hover {
+            border-color: rgba(147, 51, 234, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .dream-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .dream-title-group h3 {
+            font-family: var(--font-display);
+            font-size: 1.3rem;
+            margin-bottom: 4px;
+        }
+
+        .dream-date {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .dream-card-emotions {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 15px;
+        }
+
+        .card-emotion-tag {
+            font-size: 0.75rem;
+            padding: 3px 8px;
+            border-radius: 12px;
+            background: rgba(147, 51, 234, 0.1);
+            color: #c084fc;
+            border: 1px solid rgba(147, 51, 234, 0.2);
+        }
+
+        .dream-snippet {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .dream-full-interpretation {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+            display: none;
+            animation: slideDown 0.3s ease-out forwards;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; max-height: 0; }
+            to { opacity: 1; max-height: 1000px; }
+        }
+
+        .dream-card.expanded .dream-full-interpretation {
+            display: block;
+        }
+
+        .dream-card-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn-delete-dream {
+            background: none;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            font-size: 0.9rem;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+
+        .btn-delete-dream:hover {
+            opacity: 1;
+        }
+
+        /* Dream Explorer (Chat) */
+        .explorer-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            height: calc(100vh - 180px);
+            max-height: 700px;
+        }
+
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+            padding: 20px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .chat-message {
+            max-width: 75%;
+            padding: 14px 20px;
+            border-radius: 15px;
+            line-height: 1.5;
+            font-size: 0.95rem;
+        }
+
+        .chat-message.user {
+            align-self: flex-end;
+            background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-pink) 100%);
+            color: white;
+            border-bottom-right-radius: 2px;
+        }
+
+        .chat-message.ai {
+            align-self: flex-start;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            border-bottom-left-radius: 2px;
+        }
+
+        .chat-message.ai strong {
+            color: var(--accent-pink);
+        }
+
+        .chat-input-area {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .chat-input-area input {
+            flex: 1;
+            padding: 14px 20px;
+            background: rgba(10, 10, 10, 0.4);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-primary);
+            outline: none;
+            font-family: var(--font-body);
+            transition: all 0.3s;
+        }
+
+        .chat-input-area input:focus {
+            border-color: var(--accent-purple);
+        }
+
+        .btn-send {
+            background: var(--accent-purple);
+            border: none;
+            color: white;
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .btn-send:hover {
+            background: var(--accent-pink);
+            transform: scale(1.05);
+        }
+
+        /* Error/Toast Message */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: rgba(220, 38, 38, 0.9);
+            border: 1px solid #ef4444;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 10px;
+            z-index: 1000;
+            display: none;
+            animation: slideIn 0.3s ease forwards;
+            font-weight: 500;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-purple);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast-notification" class="toast"></div>
+
+    <!-- AUTHENTICATION SCREEN -->
+    <div id="auth-screen">
+        <div class="glass-card auth-container">
+            <h1 class="logo-title">Dream Journal AI</h1>
+            <p class="logo-subtitle">Access your subconscious interpretations</p>
+            
+            <div class="auth-tabs">
+                <button class="auth-tab active" onclick="switchAuthTab('login')">Login</button>
+                <button class="auth-tab" onclick="switchAuthTab('register')">Register</button>
+            </div>
+
+            <!-- Login Form -->
+            <form id="login-form" onsubmit="handleAuthSubmit(event, 'login')">
+                <div class="form-group">
+                    <label for="login-email">Email Address</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-envelope"></i>
+                        <input type="email" id="login-email" class="form-control" placeholder="name@domain.com" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-lock"></i>
+                        <input type="password" id="login-password" class="form-control" placeholder="••••••••" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn-gradient">Sign In</button>
+            </form>
+
+            <!-- Register Form (Hidden initially) -->
+            <form id="register-form" style="display: none;" onsubmit="handleAuthSubmit(event, 'register')">
+                <div class="form-group">
+                    <label for="register-name">Full Name</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-user"></i>
+                        <input type="text" id="register-name" class="form-control" placeholder="Your Name" required minlength="3">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="register-email">Email Address</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-envelope"></i>
+                        <input type="email" id="register-email" class="form-control" placeholder="name@domain.com" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="register-password">Password</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-lock"></i>
+                        <input type="password" id="register-password" class="form-control" placeholder="Min. 6 characters" required minlength="6">
+                    </div>
+                </div>
+                <button type="submit" class="btn-gradient">Create Account</button>
+            </form>
+
+            <div class="divider">or</div>
+
+            <button class="btn-guest" onclick="handleGuestLogin()">
+                <i class="fa-solid fa-wand-magic-sparkles" style="margin-right: 8px;"></i>
+                Quick Explore as Guest
+            </button>
+        </div>
+    </div>
+
+    <!-- MAIN APP SCREEN -->
+    <div id="app-screen">
+        <header>
+            <div class="header-logo">
+                <i class="fa-solid fa-moon"></i>
+                <h1>Dream Journal AI</h1>
+            </div>
+            
+            <nav class="nav-tabs">
+                <button class="nav-btn active" onclick="switchAppTab('log-dream')">
+                    <i class="fa-solid fa-pen-nib"></i> Log Dream
+                </button>
+                <button class="nav-btn" onclick="switchAppTab('my-dreams'); loadDreamHistory();">
+                    <i class="fa-solid fa-book-open"></i> Journal History
+                </button>
+                <button class="nav-btn" onclick="switchAppTab('explorer')">
+                    <i class="fa-solid fa-comments"></i> AI Explorer
+                </button>
+            </nav>
+
+            <div class="user-menu">
+                <span class="user-info">Logged in as: <strong id="username-display">User</strong></span>
+                <button class="btn-logout" onclick="handleLogout()">Log Out</button>
+            </div>
+        </header>
+
+        <main>
+            <!-- Log Dream View -->
+            <div id="log-dream-view" class="app-view active">
+                <div class="dream-editor-grid">
+                    <!-- Left: Form -->
+                    <div class="glass-card dream-form">
+                        <h2><i class="fa-solid fa-feather-pointed"></i> Record Your Dream</h2>
+                        <form id="dream-entry-form" onsubmit="submitDream(event)">
+                            <div class="form-group">
+                                <label for="dream-title">Dream Title (Optional)</label>
+                                <div class="input-wrapper">
+                                    <i class="fa-solid fa-heading" style="left: 14px;"></i>
+                                    <input type="text" id="dream-title" class="form-control" style="padding-left: 36px;" placeholder="Leave empty for AI auto-title">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="dream-description">Describe your dream in detail (minimum 10 words)</label>
+                                <textarea id="dream-description" class="form-control" style="padding: 12px; min-height: 180px; resize: vertical;" placeholder="I was flying over a vast purple ocean, and then..." required></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Emotions felt during the dream</label>
+                                <div class="emotion-selector">
+                                    <span class="emotion-tag" onclick="toggleEmotion(this)">Fear</span>
+                                    <span class="emotion-tag" onclick="toggleEmotion(this)">Joy</span>
+                                    <span class="emotion-tag" onclick="toggleEmotion(this)">Anxiety</span>
+                                    <span class="emotion-tag" onclick="toggleEmotion(this)">Calm</span>
+                                    <span class="emotion-tag" onclick="toggleEmotion(this)">Confusion</span>
+                                    <span class="emotion-tag" onclick="toggleEmotion(this)">Excitement</span>
+                                    <span class="emotion-tag" onclick="toggleEmotion(this)">Sadness</span>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn-gradient" style="margin-top: 10px;">Analyze Dream with Gemini AI</button>
+                        </form>
+                    </div>
+
+                    <!-- Right: AI Analysis Box -->
+                    <div class="glass-card ai-result-card">
+                        <!-- Placeholder -->
+                        <div id="ai-placeholder" class="ai-result-placeholder">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            <h3>Awaiting Dream Entry</h3>
+                            <p style="margin-top: 8px; font-size: 0.9rem;">Once you write and submit your dream, Gemini AI will interpret symbols, themes, and emotional patterns here.</p>
+                        </div>
+                        
+                        <!-- Loader -->
+                        <div id="ai-loader" class="loader-wrapper">
+                            <div class="cosmic-loader"></div>
+                            <h3 style="font-family: var(--font-display)">Interpreting Dream Symbols...</h3>
+                            <p style="font-size: 0.9rem; color: var(--text-secondary);">Connecting to Gemini AI, analyzing subconscious symbols...</p>
+                        </div>
+
+                        <!-- Result -->
+                        <div id="ai-result-content" class="ai-interpretation-content">
+                            <span id="ai-dream-emotions" class="dream-card-emotions" style="margin-bottom: 10px;"></span>
+                            <h3 id="ai-dream-title">Auto-Generated Title</h3>
+                            <div class="analysis-block">
+                                <h4>AI Analysis & Interpretation</h4>
+                                <p id="ai-interpretation-text">Gemini Analysis will render here...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Journal History View -->
+            <div id="my-dreams-view" class="app-view">
+                <div class="dream-list-header">
+                    <h2>Your Dream Journal</h2>
+                    <span id="dream-count" style="font-size: 0.95rem; color: var(--text-secondary)">0 Dreams Loaded</span>
+                </div>
+                
+                <div id="dreams-list" class="dreams-container">
+                    <!-- History cards load here -->
+                </div>
+            </div>
+
+            <!-- AI Explorer Tab -->
+            <div id="explorer-view" class="app-view">
+                <div class="glass-card explorer-layout">
+                    <div class="chat-container">
+                        <div class="chat-messages" id="chat-messages-box">
+                            <div class="chat-message ai">
+                                <strong>Dream Explorer:</strong> Hello! I have access to all your logged dreams. You can ask me questions like:
+                                <br><br>
+                                <em>"Why do I keep dreaming about oceans?"</em> or 
+                                <br><em>"Is there a recurring theme of fear in my dreams?"</em>
+                            </div>
+                        </div>
+                        <div class="chat-input-area">
+                            <input type="text" id="chat-input" placeholder="Ask a question about your dream history..." onkeydown="if(event.key === 'Enter') sendChatMessage()">
+                            <button class="btn-send" onclick="sendChatMessage()"><i class="fa-solid fa-paper-plane"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- MAIN APP SCRIPT -->
+    <script>
+        const API_URL = ""; // Relative path to call the FastAPI server running on the same container
+        let userToken = localStorage.getItem('token') || "";
+        let userData = JSON.parse(localStorage.getItem('user_data')) || null;
+        let selectedEmotions = [];
+        let chatHistory = [];
+
+        // Check login state on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            if (userToken && userData) {
+                showAppScreen();
+            } else {
+                showAuthScreen();
+            }
+        });
+
+        // Toast notifications
+        function showToast(message, isError = true) {
+            const toast = document.getElementById('toast-notification');
+            toast.textContent = message;
+            toast.style.background = isError ? 'rgba(220, 38, 38, 0.9)' : 'rgba(16, 185, 129, 0.9)';
+            toast.style.borderColor = isError ? '#ef4444' : '#10b981';
+            toast.style.display = 'block';
+            
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 4000);
+        }
+
+        // Screen switching
+        function showAuthScreen() {
+            document.getElementById('auth-screen').style.display = 'flex';
+            document.getElementById('app-screen').style.display = 'none';
+        }
+
+        function showAppScreen() {
+            document.getElementById('auth-screen').style.display = 'none';
+            document.getElementById('app-screen').style.display = 'flex';
+            document.getElementById('username-display').textContent = userData.name || "User";
+        }
+
+        // Switch Auth tabs
+        function switchAuthTab(mode) {
+            const tabs = document.querySelectorAll('.auth-tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            if (mode === 'login') {
+                document.getElementById('login-form').style.display = 'block';
+                document.getElementById('register-form').style.display = 'none';
+                tabs[0].classList.add('active');
+            } else {
+                document.getElementById('login-form').style.display = 'none';
+                document.getElementById('register-form').style.display = 'block';
+                tabs[1].classList.add('active');
+            }
+        }
+
+        // Switch Navigation Tabs
+        function switchAppTab(tabId) {
+            const btns = document.querySelectorAll('.nav-btn');
+            btns.forEach(btn => btn.classList.remove('active'));
+            
+            // find correct button and add active
+            event.currentTarget.classList.add('active');
+
+            const views = document.querySelectorAll('.app-view');
+            views.forEach(view => view.classList.remove('active'));
+
+            document.getElementById(`${tabId}-view`).classList.add('active');
+        }
+
+        // Auth Operations
+        async function handleAuthSubmit(e, mode) {
+            e.preventDefault();
+            
+            const email = document.getElementById(`${mode}-email`).value;
+            const password = document.getElementById(`${mode}-password`).value;
+            
+            try {
+                if (mode === 'register') {
+                    const name = document.getElementById('register-name').value;
+                    const response = await fetch(`${API_URL}/users/register`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name, email, password })
+                    });
+                    
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.detail || 'Registration failed');
+                    
+                    showToast('Registration successful! Please log in.', false);
+                    switchAuthTab('login');
+                } else {
+                    // Login
+                    const response = await fetch(`${API_URL}/users/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password })
+                    });
+                    
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.detail || 'Login failed');
+                    
+                    userToken = data.access_token;
+                    userData = data.user;
+                    localStorage.setItem('token', userToken);
+                    localStorage.setItem('user_data', JSON.stringify(userData));
+                    
+                    showToast('Logged in successfully!', false);
+                    showAppScreen();
+                }
+            } catch (err) {
+                showToast(err.message);
+            }
+        }
+
+        async function handleGuestLogin() {
+            try {
+                const response = await fetch(`${API_URL}/users/guest`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.detail || 'Guest login failed');
+                
+                userToken = data.access_token;
+                userData = data.user;
+                localStorage.setItem('token', userToken);
+                localStorage.setItem('user_data', JSON.stringify(userData));
+                
+                showToast('Welcome Guest! Let\'s explore.', false);
+                showAppScreen();
+            } catch (err) {
+                showToast(err.message);
+            }
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user_data');
+            userToken = "";
+            userData = null;
+            chatHistory = [];
+            showAuthScreen();
+        }
+
+        // Emotion selector tags toggle
+        function toggleEmotion(element) {
+            const emotion = element.textContent;
+            if (element.classList.contains('selected')) {
+                element.classList.remove('selected');
+                selectedEmotions = selectedEmotions.filter(e => e !== emotion);
+            } else {
+                element.classList.add('selected');
+                selectedEmotions.push(emotion);
+            }
+        }
+
+        // Submit Dream
+        async function submitDream(e) {
+            e.preventDefault();
+            
+            const titleInput = document.getElementById('dream-title').value.trim();
+            const description = document.getElementById('dream-description').value.trim();
+            const title = titleInput === "" ? null : titleInput;
+
+            // Simple validation for words (minimum 2 words is checked on backend anyway)
+            if (description.split(/\s+/).length < 2) {
+                showToast("Please describe the dream with at least a few words.");
+                return;
+            }
+
+            // Update UI to loading
+            document.getElementById('ai-placeholder').style.display = 'none';
+            document.getElementById('ai-result-content').style.display = 'none';
+            document.getElementById('ai-loader').style.display = 'flex';
+
+            try {
+                const response = await fetch(`${API_URL}/dreams/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${userToken}`
+                    },
+                    body: JSON.stringify({
+                        title: title,
+                        description: description,
+                        emotions: selectedEmotions
+                    })
+                });
+
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.detail || 'Failed to analyze dream');
+
+                // Render AI Interpretation
+                document.getElementById('ai-loader').style.display = 'none';
+                
+                const titleHeading = document.getElementById('ai-dream-title');
+                const interpretationText = document.getElementById('ai-interpretation-text');
+                const emotionsSpan = document.getElementById('ai-dream-emotions');
+
+                titleHeading.textContent = data.title || "Untiled Dream";
+                interpretationText.textContent = data.interpretation;
+                
+                // Clear and add emotions
+                emotionsSpan.innerHTML = "";
+                if (data.emotions && data.emotions.length > 0) {
+                    data.emotions.forEach(emotion => {
+                        const span = document.createElement('span');
+                        span.className = 'card-emotion-tag';
+                        span.textContent = emotion;
+                        emotionsSpan.appendChild(span);
+                    });
+                }
+
+                document.getElementById('ai-result-content').style.display = 'block';
+                
+                // Clear Form
+                document.getElementById('dream-entry-form').reset();
+                document.querySelectorAll('.emotion-tag').forEach(tag => tag.classList.remove('selected'));
+                selectedEmotions = [];
+
+                showToast("Dream saved and interpreted successfully!", false);
+
+            } catch (err) {
+                document.getElementById('ai-loader').style.display = 'none';
+                document.getElementById('ai-placeholder').style.display = 'block';
+                showToast(err.message);
+            }
+        }
+
+        // Load Dream History
+        async function loadDreamHistory() {
+            const container = document.getElementById('dreams-list');
+            const countText = document.getElementById('dream-count');
+            container.innerHTML = `<div class="loader-wrapper" style="display: flex; margin: 50px 0;"><div class="cosmic-loader"></div></div>`;
+
+            try {
+                const response = await fetch(`${API_URL}/dreams/`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${userToken}`
+                    }
+                });
+
+                const dreams = await response.json();
+                if (!response.ok) throw new Error(dreams.detail || 'Failed to fetch dream history');
+
+                container.innerHTML = "";
+                countText.textContent = `${dreams.length} Dream${dreams.length === 1 ? '' : 's'} Logged`;
+
+                if (dreams.length === 0) {
+                    container.innerHTML = `
+                        <div class="glass-card" style="padding: 40px; text-align: center; color: var(--text-secondary);">
+                            <i class="fa-solid fa-moon" style="font-size: 3rem; margin-bottom: 15px; color: var(--accent-purple);"></i>
+                            <h3>Your journal is empty</h3>
+                            <p style="margin-top: 5px;">Head over to "Log Dream" to write down your first subconscious journey.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                dreams.forEach(dream => {
+                    const formattedDate = new Date(dream.timestamp).toLocaleDateString(undefined, { 
+                        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+                    });
+
+                    const card = document.createElement('div');
+                    card.className = 'glass-card dream-card';
+                    card.onclick = (e) => {
+                        // Don't expand if delete button is clicked
+                        if (e.target.closest('.btn-delete-dream')) return;
+                        card.classList.toggle('expanded');
+                    };
+
+                    let emotionsHtml = "";
+                    if (dream.emotions && dream.emotions.length > 0) {
+                        dream.emotions.forEach(emotion => {
+                            emotionsHtml += `<span class="card-emotion-tag">${emotion}</span>`;
+                        });
+                    }
+
+                    card.innerHTML = `
+                        <div class="dream-card-header">
+                            <div class="dream-title-group">
+                                <h3>${dream.title || 'Untitled Dream'}</h3>
+                                <span class="dream-date">${formattedDate}</span>
+                            </div>
+                            <button class="btn-delete-dream" onclick="deleteDream(${dream.id})">
+                                <i class="fa-solid fa-trash-can"></i> Delete
+                            </button>
+                        </div>
+                        <div class="dream-card-emotions">
+                            ${emotionsHtml}
+                        </div>
+                        <div class="dream-snippet">${dream.description}</div>
+                        <div class="dream-full-interpretation">
+                            <div class="analysis-block" style="margin-top: 0;">
+                                <h4>AI Analysis & Interpretation</h4>
+                                <p style="white-space: pre-line;">${dream.interpretation}</p>
+                            </div>
+                        </div>
+                    `;
+
+                    container.appendChild(card);
+                });
+
+            } catch (err) {
+                container.innerHTML = `<div class="glass-card" style="padding: 40px; text-align: center; color: #ef4444;">${err.message}</div>`;
+            }
+        }
+
+        // Delete Dream
+        async function deleteDream(dreamId) {
+            if (!confirm("Are you sure you want to delete this dream entry permanently?")) return;
+
+            try {
+                const response = await fetch(`${API_URL}/dreams/${dreamId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${userToken}`
+                    }
+                });
+
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.detail || 'Failed to delete dream');
+                }
+
+                showToast("Dream deleted successfully", false);
+                loadDreamHistory();
+
+            } catch (err) {
+                showToast(err.message);
+            }
+        }
+
+        // Chat with Dream Explorer
+        async function sendChatMessage() {
+            const input = document.getElementById('chat-input');
+            const question = input.value.trim();
+            if (question === "") return;
+
+            // Clear Input
+            input.value = "";
+
+            const chatBox = document.getElementById('chat-messages-box');
+            
+            // Append User Message
+            const userMsgDiv = document.createElement('div');
+            userMsgDiv.className = 'chat-message user';
+            userMsgDiv.innerHTML = `<strong>You:</strong> ${question}`;
+            chatBox.appendChild(userMsgDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            // Append AI Loader Message
+            const aiMsgDiv = document.createElement('div');
+            aiMsgDiv.className = 'chat-message ai';
+            aiMsgDiv.innerHTML = `<strong>Dream Explorer:</strong> <i class="fa-solid fa-spinner fa-spin" style="margin-left: 5px;"></i> Thinking...`;
+            chatBox.appendChild(aiMsgDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            try {
+                const response = await fetch(`${API_URL}/dream-explorer/ask`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${userToken}`
+                    },
+                    body: JSON.stringify({
+                        question: question,
+                        chat_history: chatHistory,
+                        top_k: 5
+                    })
+                });
+
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.detail || 'Failed to get answer');
+
+                // Update AI Message
+                aiMsgDiv.innerHTML = `<strong>Dream Explorer:</strong> ${data.answer}`;
+                
+                // Add relevant dreams if returned
+                if (data.relevant_dreams && data.relevant_dreams.length > 0) {
+                    let dreamsLink = '<div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.05); font-size: 0.8rem; color: var(--text-secondary);">';
+                    dreamsLink += '<strong>Reference dreams:</strong> ';
+                    data.relevant_dreams.forEach((rd, idx) => {
+                        dreamsLink += `"${rd.title}"${idx < data.relevant_dreams.length - 1 ? ', ' : ''}`;
+                    });
+                    dreamsLink += '</div>';
+                    aiMsgDiv.innerHTML += dreamsLink;
+                }
+
+                chatBox.scrollTop = chatBox.scrollHeight;
+
+                // Update chat history state
+                chatHistory.push({"role": "user", "content": question});
+                chatHistory.push({"role": "assistant", "content": data.answer});
+
+            } catch (err) {
+                aiMsgDiv.innerHTML = `<strong>Dream Explorer:</strong> <span style="color: #ef4444;">Error: ${err.message}</span>`;
+            }
+        }
+    </script>
+</body>
+</html>

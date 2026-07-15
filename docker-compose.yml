@@ -1,22 +1,22 @@
-# version: "3.8"
+version: "3.8"
 
 services:
-  # postgres:
-  #   image: postgres:15-alpine
-  #   container_name: dream_journal_db
-  #   environment:
-  #     POSTGRES_USER: ${DB_USER}
-  #     POSTGRES_PASSWORD: ${DB_PASSWORD}
-  #     POSTGRES_DB: ${DB_NAME}
-  #   ports:
-  #     - "5432:5432"
-  #   volumes:
-  #     - postgres_data:/var/lib/postgresql/data
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
-  #     interval: 5s
-  #     timeout: 5s
-  #     retries: 5
+  postgres:
+    image: pgvector/pgvector:pg15
+    container_name: dream_journal_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: dream_journal
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d dream_journal"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   fastapi_dream_app:
     image: dreamy-image
@@ -31,9 +31,9 @@ services:
       - SERVER_HOST=0.0.0.0
     env_file:
       - .env
-#     depends_on:
-#       postgres:
-#         condition: service_healthy
+    depends_on:
+      postgres:
+        condition: service_healthy
 
-# volumes:
-#   postgres_data:
+volumes:
+  postgres_data:

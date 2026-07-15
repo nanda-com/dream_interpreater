@@ -1,7 +1,7 @@
 import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.security import OAuth2PasswordBearer
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.exceptions import RequestValidationError
 from src.backend.databases import create_tables
 from fastapi.middleware.cors import CORSMiddleware
@@ -103,6 +103,15 @@ def create_application() -> FastAPI:
     
     # Include router after OpenAPI setup
     app.include_router(router)
+
+    # Serve the frontend at the root route
+    @app.get("/", response_class=HTMLResponse)
+    async def read_root():
+        import os
+        frontend_path = os.path.join("src", "frontend", "index.html")
+        with open(frontend_path, "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read(), status_code=200)
+
     return app
 
 # Create app instance
