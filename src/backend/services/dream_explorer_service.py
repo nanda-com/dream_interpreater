@@ -50,7 +50,7 @@ class DreamExplorerService:
         self.retrieval_service = get_retrieval_service()
 
         # Initialize Gemini LLM
-        model_name = os.getenv("LLM_MODEL_NAME", "gemini-2.0-flash-exp")
+        model_name = os.getenv("LLM_MODEL_NAME", "gemini-3.5-flash")
         api_key = os.getenv("GOOGLE_API_KEY")
 
         if not api_key:

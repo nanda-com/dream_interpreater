@@ -16,7 +16,7 @@ class GeminiDreamInterpreter:
         self.api_key = api_key or os.getenv('GOOGLE_API_KEY')
         llm_modelname = os.getenv('LLM_MODEL_NAME')
         if not llm_modelname:
-            llm_modelname = 'gemini-2.5-flash-lite'
+            llm_modelname = 'gemini-3.5-flash'
         
         # Validate API key
         if not self.api_key:
